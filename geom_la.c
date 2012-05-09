@@ -4,8 +4,8 @@
 float geom_norm2f(const float v[2]){
 	float x = fabsf(v[0]);
 	float y = fabsf(v[1]);
-	if(x < y){
-		if(0 == x){
+	if(x <= y){
+		if(0.f == x){
 			return y;
 		}
 		x /= y;
@@ -18,8 +18,8 @@ float geom_norm2f(const float v[2]){
 double geom_norm2d(const double v[2]){
 	double x = fabs(v[0]);
 	double y = fabs(v[1]);
-	if(x < y){
-		if(0 == x){
+	if(x <= y){
+		if(0. == x){
 			return y;
 		}
 		x /= y;
@@ -137,13 +137,13 @@ void geom_maketriad3f(const float  a[3], float  b[3], float  c[3]){
 		a[1] / alen,
 		a[2] / alen
 	};
-	if(fabsf(a[0]) > fabsf(a[1])){
-		float invLen = 1. / geom_norm2f(an[0], an[2]);
-		b[0] = -an[2] * invLen;
-		b[1] = 0;
-		b[2] = an[0] * invLen;
+	if(fabsf(a[0]) > fabsf(a[2])){
+		float invLen = 1.f / geom_norm2f(&an[0]);
+		b[0] = -an[1] * invLen;
+		b[1] = an[0] * invLen;
+		b[2] = 0;
 	}else{
-		float invLen = 1. / geom_norm2f(an[1], an[2]);
+		float invLen = 1. / geom_norm2f(&an[1]);
 		b[0] = 0;
 		b[1] = an[2] * invLen;
 		b[2] = -an[1] * invLen;
@@ -157,13 +157,13 @@ void geom_maketriad3d(const double a[3], double b[3], double c[3]){
 		a[1] / alen,
 		a[2] / alen
 	};
-	if(fabs(a[0]) > fabs(a[1])){
-		double invLen = 1. / geom_norm2d(an[0], an[2]);
-		b[0] = -an[2] * invLen;
-		b[1] = 0;
-		b[2] = an[0] * invLen;
+	if(fabs(a[0]) > fabs(a[2])){
+		double invLen = 1. / geom_norm2d(&an[0]);
+		b[0] = -an[1] * invLen;
+		b[1] = an[0] * invLen;
+		b[2] = 0;
 	}else{
-		double invLen = 1. / geom_norm2d(an[1], an[2]);
+		double invLen = 1. / geom_norm2d(&an[1]);
 		b[0] = 0;
 		b[1] = an[2] * invLen;
 		b[2] = -an[1] * invLen;
@@ -246,7 +246,7 @@ void geom_matmat3d(const double a[9],  double c[9]){
 	c[7] = a[1]*b[6] + a[4]*b[7] + a[7]*b[8];
 	c[8] = a[2]*b[6] + a[5]*b[7] + a[8]*b[8];
 }
-void geom_matat4f(const float  a[16], float  c[16]){
+void geom_matmat4f(const float  a[16], float  c[16]){
 	float b[16]; memcpy(b, c, 16*sizeof(float));
 	c[0] = a[0]*b[0] + a[4]*b[1] + a[ 8]*b[2] + a[12]*b[3];
 	c[1] = a[1]*b[0] + a[5]*b[1] + a[ 9]*b[2] + a[13]*b[3];
@@ -309,13 +309,13 @@ void geom_matinv3f(float  m[9]){
 		+a[6]*(a[1]*a[5]-a[4]*a[2])
 	);
 	m[0] =  (a[4]*a[8]-a[5]*a[7])*d;
-	m[1] = -(a[3]*a[8]-a[6]*a[5])*d;
-	m[2] =  (a[3]*a[7]-a[6]*a[4])*d;
-	m[3] = -(a[1]*a[8]-a[7]*a[2])*d;
+	m[1] = -(a[1]*a[8]-a[7]*a[2])*d;
+	m[2] =  (a[1]*a[5]-a[2]*a[4])*d;
+	m[3] = -(a[3]*a[8]-a[6]*a[5])*d;
 	m[4] =  (a[0]*a[8]-a[6]*a[2])*d;
-	m[5] = -(a[0]*a[7]-a[1]*a[6])*d;
-	m[6] =  (a[1]*a[5]-a[2]*a[4])*d;
-	m[7] = -(a[0]*a[5]-a[2]*a[3])*d;
+	m[5] = -(a[0]*a[5]-a[2]*a[3])*d;
+	m[6] =  (a[3]*a[7]-a[6]*a[4])*d;
+	m[7] = -(a[0]*a[7]-a[1]*a[6])*d;
 	m[8] =  (a[0]*a[4]-a[1]*a[3])*d;
 }
 void geom_matinv3d(double m[9]){
@@ -326,13 +326,13 @@ void geom_matinv3d(double m[9]){
 		+a[6]*(a[1]*a[5]-a[4]*a[2])
 	);
 	m[0] =  (a[4]*a[8]-a[5]*a[7])*d;
-	m[1] = -(a[3]*a[8]-a[6]*a[5])*d;
-	m[2] =  (a[3]*a[7]-a[6]*a[4])*d;
-	m[3] = -(a[1]*a[8]-a[7]*a[2])*d;
+	m[1] = -(a[1]*a[8]-a[7]*a[2])*d;
+	m[2] =  (a[1]*a[5]-a[2]*a[4])*d;
+	m[3] = -(a[3]*a[8]-a[6]*a[5])*d;
 	m[4] =  (a[0]*a[8]-a[6]*a[2])*d;
-	m[5] = -(a[0]*a[7]-a[1]*a[6])*d;
-	m[6] =  (a[1]*a[5]-a[2]*a[4])*d;
-	m[7] = -(a[0]*a[5]-a[2]*a[3])*d;
+	m[5] = -(a[0]*a[5]-a[2]*a[3])*d;
+	m[6] =  (a[3]*a[7]-a[6]*a[4])*d;
+	m[7] = -(a[0]*a[7]-a[1]*a[6])*d;
 	m[8] =  (a[0]*a[4]-a[1]*a[3])*d;
 }
 void geom_matinv4f(float  m[16]){
@@ -365,12 +365,12 @@ void geom_matinv4f(float  m[16]){
 		for(j = i; j < 4; ++j){
 			sum = 1.f;
 			if(i != j){
-				x = 0.f;
+				sum = 0.f;
 				for(k = i; k < j; ++k){
-					x -= m[j+4*k]*m[k+4*i];
+					sum -= m[j+4*k]*m[k+4*i];
 				}
 			}
-			m[j+4*i] = x / m[j+4*j];
+			m[j+4*i] = sum / m[j+4*j];
 		}
 	}
 	for(i = 0; i < 4; ++i){
@@ -423,12 +423,12 @@ void geom_matinv4d(double m[16]){
 		for(j = i; j < 4; ++j){
 			sum = 1.;
 			if(i != j){
-				x = 0.;
+				sum = 0.;
 				for(k = i; k < j; ++k){
-					x -= m[j+4*k]*m[k+4*i];
+					sum -= m[j+4*k]*m[k+4*i];
 				}
 			}
-			m[j+4*i] = x / m[j+4*j];
+			m[j+4*i] = sum / m[j+4*j];
 		}
 	}
 	for(i = 0; i < 4; ++i){
