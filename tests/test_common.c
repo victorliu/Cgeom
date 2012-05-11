@@ -95,7 +95,7 @@ int checkd_equal(const char *func, double v, double w){
 }
 int checkf_NaN(const char *func, float v){
 	if(v == v){
-		printf(" Failure in %s: %.14g != NaN, %d\n", func, v);
+		printf(" Failure in %s: %.14g != NaN\n", func, v);
 		return 1;
 	}
 	return 0;
