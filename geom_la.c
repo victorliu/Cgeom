@@ -171,59 +171,50 @@ void geom_maketriad3d(const double a[3], double b[3], double c[3]){
 	geom_cross3d(an, b, c);
 }
 
-void geom_matvec2f(const float  m[4],  float  v[2]){
-	float v0 = v[0];
-	v[0] = m[0] * v[0] + m[2] * v[1];
-	v[1] = m[1] * v0   + m[3] * v[1];
+void geom_matvec2f(const float  m[4], const float x[2], float y[2]){
+	y[0] = m[0] * x[0] + m[2] * x[1];
+	y[1] = m[1] * x[0] + m[3] * x[1];
 }
-void geom_matvec2d(const double m[4],  double v[2]){
-	double v0 = v[0];
-	v[0] = m[0] * v[0] + m[2] * v[1];
-	v[1] = m[1] * v0   + m[3] * v[1];
+void geom_matvec2d(const double m[4], const double x[2], double y[2]){
+	y[0] = m[0] * x[0] + m[2] * x[1];
+	y[1] = m[1] * x[0] + m[3] * x[1];
 }
-void geom_matvec3f(const float  m[9],  float  v[3]){
-	float u[3] = { v[0], v[1], v[2] };
+void geom_matvec3f(const float  m[9],  const float u[3], float v[3]){
 	v[0] = m[0] * u[0] + m[3] * u[1] + m[6] * u[2];
 	v[1] = m[1] * u[0] + m[4] * u[1] + m[7] * u[2];
 	v[2] = m[2] * u[0] + m[5] * u[1] + m[8] * u[2];
 }
-void geom_matvec3d(const double m[9],  double v[3]){
-	double u[3] = { v[0], v[1], v[2] };
+void geom_matvec3d(const double m[9],  const double u[3], double v[3]){
 	v[0] = m[0] * u[0] + m[3] * u[1] + m[6] * u[2];
 	v[1] = m[1] * u[0] + m[4] * u[1] + m[7] * u[2];
 	v[2] = m[2] * u[0] + m[5] * u[1] + m[8] * u[2];
 }
-void geom_matvec4f(const float  m[16], float  v[4]){
-	float u[4] = { v[0], v[1], v[2], v[3] };
+void geom_matvec4f(const float  m[16], const float u[4], float v[4]){
 	v[0] = m[0] * u[0] + m[4] * u[1] + m[ 8] * u[2] + m[12] * u[3];
 	v[1] = m[1] * u[0] + m[5] * u[1] + m[ 9] * u[2] + m[13] * u[3];
 	v[2] = m[2] * u[0] + m[6] * u[1] + m[10] * u[2] + m[14] * u[3];
 	v[3] = m[3] * u[0] + m[7] * u[1] + m[11] * u[2] + m[15] * u[3];
 }
-void geom_matvec4d(const double m[16], double v[4]){
-	double u[4] = { v[0], v[1], v[2], v[3] };
+void geom_matvec4d(const double m[16], const double u[4], double v[4]){
 	v[0] = m[0] * u[0] + m[4] * u[1] + m[ 8] * u[2] + m[12] * u[3];
 	v[1] = m[1] * u[0] + m[5] * u[1] + m[ 9] * u[2] + m[13] * u[3];
 	v[2] = m[2] * u[0] + m[6] * u[1] + m[10] * u[2] + m[14] * u[3];
 	v[3] = m[3] * u[0] + m[7] * u[1] + m[11] * u[2] + m[15] * u[3];
 }
 
-void geom_matmat2f(const float  a[4],  float  c[4]){
-	float b[4] = { c[0], c[1], c[2], c[3] };
+void geom_matmat2f(const float a[4], const float b[4], float c[4]){
 	c[0] = a[0]*b[0] + a[2]*b[1];
 	c[1] = a[1]*b[0] + a[3]*b[1];
 	c[2] = a[0]*b[2] + a[2]*b[3];
 	c[3] = a[1]*b[2] + a[3]*b[3];
 }
-void geom_matmat2d(const double a[4],  double c[4]){
-	double b[4] = { c[0], c[1], c[2], c[3] };
+void geom_matmat2d(const double a[4], const double b[4], double c[4]){
 	c[0] = a[0]*b[0] + a[2]*b[1];
 	c[1] = a[1]*b[0] + a[3]*b[1];
 	c[2] = a[0]*b[2] + a[2]*b[3];
 	c[3] = a[1]*b[2] + a[3]*b[3];
 }
-void geom_matmat3f(const float  a[9],  float  c[9]){
-	float b[9]; memcpy(b, c, 9*sizeof(float));
+void geom_matmat3f(const float a[9], const float b[9], float c[9]){
 	c[0] = a[0]*b[0] + a[3]*b[1] + a[6]*b[2];
 	c[1] = a[1]*b[0] + a[4]*b[1] + a[7]*b[2];
 	c[2] = a[2]*b[0] + a[5]*b[1] + a[8]*b[2];
@@ -234,8 +225,7 @@ void geom_matmat3f(const float  a[9],  float  c[9]){
 	c[7] = a[1]*b[6] + a[4]*b[7] + a[7]*b[8];
 	c[8] = a[2]*b[6] + a[5]*b[7] + a[8]*b[8];
 }
-void geom_matmat3d(const double a[9],  double c[9]){
-	double b[9]; memcpy(b, c, 9*sizeof(double));
+void geom_matmat3d(const double a[9], const double b[9], double c[9]){
 	c[0] = a[0]*b[0] + a[3]*b[1] + a[6]*b[2];
 	c[1] = a[1]*b[0] + a[4]*b[1] + a[7]*b[2];
 	c[2] = a[2]*b[0] + a[5]*b[1] + a[8]*b[2];
@@ -246,8 +236,7 @@ void geom_matmat3d(const double a[9],  double c[9]){
 	c[7] = a[1]*b[6] + a[4]*b[7] + a[7]*b[8];
 	c[8] = a[2]*b[6] + a[5]*b[7] + a[8]*b[8];
 }
-void geom_matmat4f(const float  a[16], float  c[16]){
-	float b[16]; memcpy(b, c, 16*sizeof(float));
+void geom_matmat4f(const float a[16], const float b[16], float c[16]){
 	c[0] = a[0]*b[0] + a[4]*b[1] + a[ 8]*b[2] + a[12]*b[3];
 	c[1] = a[1]*b[0] + a[5]*b[1] + a[ 9]*b[2] + a[13]*b[3];
 	c[2] = a[2]*b[0] + a[6]*b[1] + a[10]*b[2] + a[14]*b[3];
@@ -265,8 +254,7 @@ void geom_matmat4f(const float  a[16], float  c[16]){
 	c[14] = a[2]*b[12] + a[6]*b[13] + a[10]*b[14] + a[14]*b[15];
 	c[15] = a[3]*b[12] + a[7]*b[13] + a[11]*b[14] + a[15]*b[15];
 }
-void geom_matmat4d(const double a[16], double c[16]){
-	double b[16]; memcpy(b, c, 16*sizeof(double));
+void geom_matmat4d(const double a[16], const double b[16], double c[16]){
 	c[0] = a[0]*b[0] + a[4]*b[1] + a[ 8]*b[2] + a[12]*b[3];
 	c[1] = a[1]*b[0] + a[5]*b[1] + a[ 9]*b[2] + a[13]*b[3];
 	c[2] = a[2]*b[0] + a[6]*b[1] + a[10]*b[2] + a[14]*b[3];
@@ -450,4 +438,38 @@ void geom_matinv4d(double m[16]){
 			m[j+4*i] = sum;
 		}
 	}
+}
+
+void geom_matsvd2d(const double m[4], double u[4], double s[2], double vt[4]){
+	// Transpose[m].m = [ a b ]
+	//                  [ b c ]
+	double a = m[0]*m[0] + m[1]*m[1];
+	double c = m[2]*m[2] + m[3]*m[3];
+	double b[2] = {
+		m[0]*m[2] + m[1]*m[3],
+		0.5*(a - c)
+	};
+	double sum = 0.5*(a + c);
+	double rt = geom_norm2d(b);
+	s[0] = sqrt(sum + rt);
+	s[1] = sqrt(sum - rt);
+	vt[0] = b[1] + rt;
+	vt[1] = b[0];
+	vt[2] = b[1] - rt;
+	vt[3] = b[0];
+	geom_normalize2d(&vt[0]);
+	geom_normalize2d(&vt[2]);
+	a = vt[1]; vt[1] = vt[2]; vt[2] = a;
+	// Now we need eigenvectors of m.Transpose[m]
+	a = m[0]*m[0] + m[2]*m[2];
+	c = m[1]*m[1] + m[3]*m[3];
+	b[0] = m[0]*m[1] + m[2]*m[3];
+	b[1] = 0.5*(a - c);
+	rt = geom_norm2d(b);
+	u[0] = b[1] + rt;
+	u[1] = b[0];
+	u[2] = b[1] - rt;
+	u[3] = b[0];
+	geom_normalize2d(&u[0]);
+	geom_normalize2d(&u[2]);
 }

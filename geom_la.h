@@ -31,20 +31,20 @@ void geom_maketriad3d(const double a[3], double b[3], double c[3]);
 //   [ m[1]  m[3] ]
 
 // Overwrites v with the matrix-vector product m.v
-void geom_matvec2f(const float  m[4],  float  v[2]);
-void geom_matvec2d(const double m[4],  double v[2]);
-void geom_matvec3f(const float  m[9],  float  v[3]);
-void geom_matvec3d(const double m[9],  double v[3]);
-void geom_matvec4f(const float  m[16], float  v[4]);
-void geom_matvec4d(const double m[16], double v[4]);
+void geom_matvec2f(const float  m[4],  const float  x[2], float  y[2]);
+void geom_matvec2d(const double m[4],  const double x[2], double y[2]);
+void geom_matvec3f(const float  m[9],  const float  x[3], float  y[3]);
+void geom_matvec3d(const double m[9],  const double x[3], double y[3]);
+void geom_matvec4f(const float  m[16], const float  x[4], float  y[4]);
+void geom_matvec4d(const double m[16], const double x[4], double y[4]);
 
 // Overwrites b with the matrix-matrix product a.b
-void geom_matmat2f(const float  a[4],  float  b[4]);
-void geom_matmat2d(const double a[4],  double b[4]);
-void geom_matmat3f(const float  a[9],  float  b[9]);
-void geom_matmat3d(const double a[9],  double b[9]);
-void geom_matmat4f(const float  a[16], float  b[16]);
-void geom_matmat4d(const double a[16], double b[16]);
+void geom_matmat2f(const float  a[4],  const float  b[4], float  c[4]);
+void geom_matmat2d(const double a[4],  const double b[4], double c[4]);
+void geom_matmat3f(const float  a[9],  const float  b[9], float  c[9]);
+void geom_matmat3d(const double a[9],  const double b[9], double c[9]);
+void geom_matmat4f(const float  a[16], const float  b[16], float  c[16]);
+void geom_matmat4d(const double a[16], const double b[16], double c[16]);
 
 // Inverts the matrix m in-place (assumes the matrix is well conditioned)
 void geom_matinv2f(float  m[4]);
@@ -53,5 +53,8 @@ void geom_matinv3f(float  m[9]);
 void geom_matinv3d(double m[9]);
 void geom_matinv4f(float  m[16]);
 void geom_matinv4d(double m[16]);
+
+// Computes the SVD of m = u.diag(s).vt
+void geom_matsvd2d(const double m[4], double u[4], double s[2], double vt[4]);
 
 #endif // GEOM_LA_H_INCLUDED

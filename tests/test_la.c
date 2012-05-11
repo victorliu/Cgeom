@@ -196,12 +196,12 @@ int main(){
 			f2[i] = (float)(i+17);
 			d2[i] = (double)(i+17);
 		}
-		geom_matvec2f(f1, f2);
-		geom_matvec2d(d1, d2);
-		checkf_small("geom_matvec2f check1", f2[0] - 71.f);
-		checkf_small("geom_matvec2f check2", f2[1] - 106.f);
-		checkf_small("geom_matvec2d check1", d2[0] - 71.0);
-		checkf_small("geom_matvec2d check2", d2[1] - 106.0);
+		geom_matvec2f(f1, f2, f3);
+		geom_matvec2d(d1, d2, d3);
+		checkf_small("geom_matvec2f check1", f3[0] - 71.f);
+		checkf_small("geom_matvec2f check2", f3[1] - 106.f);
+		checkf_small("geom_matvec2d check1", d3[0] - 71.0);
+		checkf_small("geom_matvec2d check2", d3[1] - 106.0);
 		for(i = 0; i < 16; ++i){
 			f1[i] = (float)(i+1);
 			d1[i] = (double)(i+1);
@@ -210,14 +210,14 @@ int main(){
 			f2[i] = (float)(i+17);
 			d2[i] = (double)(i+17);
 		}
-		geom_matvec3f(f1, f2);
-		geom_matvec3d(d1, d2);
-		checkf_small("geom_matvec3f check1", f2[0] - 222.f);
-		checkf_small("geom_matvec3f check2", f2[1] - 276.f);
-		checkf_small("geom_matvec3f check3", f2[2] - 330.f);
-		checkf_small("geom_matvec3d check1", d2[0] - 222.0);
-		checkf_small("geom_matvec3d check2", d2[1] - 276.0);
-		checkf_small("geom_matvec3d check3", d2[2] - 330.0);
+		geom_matvec3f(f1, f2, f3);
+		geom_matvec3d(d1, d2, d3);
+		checkf_small("geom_matvec3f check1", f3[0] - 222.f);
+		checkf_small("geom_matvec3f check2", f3[1] - 276.f);
+		checkf_small("geom_matvec3f check3", f3[2] - 330.f);
+		checkf_small("geom_matvec3d check1", d3[0] - 222.0);
+		checkf_small("geom_matvec3d check2", d3[1] - 276.0);
+		checkf_small("geom_matvec3d check3", d3[2] - 330.0);
 		for(i = 0; i < 16; ++i){
 			f1[i] = (float)(i+1);
 			d1[i] = (double)(i+1);
@@ -226,16 +226,16 @@ int main(){
 			f2[i] = (float)(i+17);
 			d2[i] = (double)(i+17);
 		}
-		geom_matvec4f(f1, f2);
-		geom_matvec4d(d1, d2);
-		checkf_small("geom_matvec4f check1", f2[0] - 538.f);
-		checkf_small("geom_matvec4f check2", f2[1] - 612.f);
-		checkf_small("geom_matvec4f check3", f2[2] - 686.f);
-		checkf_small("geom_matvec4f check4", f2[3] - 760.f);
-		checkf_small("geom_matvec4d check1", d2[0] - 538.0);
-		checkf_small("geom_matvec4d check2", d2[1] - 612.0);
-		checkf_small("geom_matvec4d check3", d2[2] - 686.0);
-		checkf_small("geom_matvec4d check4", d2[3] - 760.0);
+		geom_matvec4f(f1, f2, f3);
+		geom_matvec4d(d1, d2, d3);
+		checkf_small("geom_matvec4f check1", f3[0] - 538.f);
+		checkf_small("geom_matvec4f check2", f3[1] - 612.f);
+		checkf_small("geom_matvec4f check3", f3[2] - 686.f);
+		checkf_small("geom_matvec4f check4", f3[3] - 760.f);
+		checkf_small("geom_matvec4d check1", d3[0] - 538.0);
+		checkf_small("geom_matvec4d check2", d3[1] - 612.0);
+		checkf_small("geom_matvec4d check3", d3[2] - 686.0);
+		checkf_small("geom_matvec4d check4", d3[3] - 760.0);
 	}
 	printf("Checking matmat and matinv\n");
 	for(i = 0; i < 1; ++i){
@@ -247,16 +247,16 @@ int main(){
 		}
 		geom_matinv2f(f1);
 		geom_matinv2d(d1);
-		geom_matmat2f(f1, f2);
-		geom_matmat2d(d1, d2);
-		checkf_small("geom_matinv2f and geom_matmat2f check1", 0.125f*(f2[0] - 1.f));
-		checkf_small("geom_matinv2f and geom_matmat2f check2", 0.125f*(f2[1] - 0.f));
-		checkf_small("geom_matinv2f and geom_matmat2f check3", 0.125f*(f2[2] - 0.f));
-		checkf_small("geom_matinv2f and geom_matmat2f check4", 0.125f*(f2[3] - 1.f));
-		checkd_small("geom_matinv2d and geom_matmat2d check1", 0.125*(d2[0] - 1.));
-		checkd_small("geom_matinv2d and geom_matmat2d check2", 0.125*(d2[1] - 0.));
-		checkd_small("geom_matinv2d and geom_matmat2d check3", 0.125*(d2[2] - 0.));
-		checkd_small("geom_matinv2d and geom_matmat2d check4", 0.125*(d2[3] - 1.));
+		geom_matmat2f(f1, f2, f3);
+		geom_matmat2d(d1, d2, d3);
+		checkf_small("geom_matinv2f and geom_matmat2f check1", 0.125f*(f3[0] - 1.f));
+		checkf_small("geom_matinv2f and geom_matmat2f check2", 0.125f*(f3[1] - 0.f));
+		checkf_small("geom_matinv2f and geom_matmat2f check3", 0.125f*(f3[2] - 0.f));
+		checkf_small("geom_matinv2f and geom_matmat2f check4", 0.125f*(f3[3] - 1.f));
+		checkd_small("geom_matinv2d and geom_matmat2d check1", 0.125*(d3[0] - 1.));
+		checkd_small("geom_matinv2d and geom_matmat2d check2", 0.125*(d3[1] - 0.));
+		checkd_small("geom_matinv2d and geom_matmat2d check3", 0.125*(d3[2] - 0.));
+		checkd_small("geom_matinv2d and geom_matmat2d check4", 0.125*(d3[3] - 1.));
 		
 		geom_randf(16, f1);
 		geom_randd(16, d1);
@@ -266,28 +266,28 @@ int main(){
 		}
 		geom_matinv3f(f1);
 		geom_matinv3d(d1);
-		geom_matmat3f(f1, f2);
-		geom_matmat3d(d1, d2);
+		geom_matmat3f(f1, f2, f3);
+		geom_matmat3d(d1, d2, d3);
 		fd = 0.1f;
 		dd = 0.1;
-		checkf_small("geom_matinv3f and geom_matmat3f check1", fd*(f2[0] - 1.f));
-		checkf_small("geom_matinv3f and geom_matmat3f check2", fd*(f2[1] - 0.f));
-		checkf_small("geom_matinv3f and geom_matmat3f check3", fd*(f2[2] - 0.f));
-		checkf_small("geom_matinv3f and geom_matmat3f check4", fd*(f2[3] - 0.f));
-		checkf_small("geom_matinv3f and geom_matmat3f check5", fd*(f2[4] - 1.f));
-		checkf_small("geom_matinv3f and geom_matmat3f check6", fd*(f2[5] - 0.f));
-		checkf_small("geom_matinv3f and geom_matmat3f check7", fd*(f2[6] - 0.f));
-		checkf_small("geom_matinv3f and geom_matmat3f check8", fd*(f2[7] - 0.f));
-		checkf_small("geom_matinv3f and geom_matmat3f check9", fd*(f2[8] - 1.f));
-		checkd_small("geom_matinv3d and geom_matmat3d check1", dd*(d2[0] - 1.));
-		checkd_small("geom_matinv3d and geom_matmat3d check2", dd*(d2[1] - 0.));
-		checkd_small("geom_matinv3d and geom_matmat3d check3", dd*(d2[2] - 0.));
-		checkd_small("geom_matinv3d and geom_matmat3d check4", dd*(d2[3] - 0.));
-		checkd_small("geom_matinv3d and geom_matmat3d check5", dd*(d2[4] - 1.));
-		checkd_small("geom_matinv3d and geom_matmat3d check6", dd*(d2[5] - 0.));
-		checkd_small("geom_matinv3d and geom_matmat3d check7", dd*(d2[6] - 0.));
-		checkd_small("geom_matinv3d and geom_matmat3d check8", dd*(d2[7] - 0.));
-		checkd_small("geom_matinv3d and geom_matmat3d check9", dd*(d2[8] - 1.));
+		checkf_small("geom_matinv3f and geom_matmat3f check1", fd*(f3[0] - 1.f));
+		checkf_small("geom_matinv3f and geom_matmat3f check2", fd*(f3[1] - 0.f));
+		checkf_small("geom_matinv3f and geom_matmat3f check3", fd*(f3[2] - 0.f));
+		checkf_small("geom_matinv3f and geom_matmat3f check4", fd*(f3[3] - 0.f));
+		checkf_small("geom_matinv3f and geom_matmat3f check5", fd*(f3[4] - 1.f));
+		checkf_small("geom_matinv3f and geom_matmat3f check6", fd*(f3[5] - 0.f));
+		checkf_small("geom_matinv3f and geom_matmat3f check7", fd*(f3[6] - 0.f));
+		checkf_small("geom_matinv3f and geom_matmat3f check8", fd*(f3[7] - 0.f));
+		checkf_small("geom_matinv3f and geom_matmat3f check9", fd*(f3[8] - 1.f));
+		checkd_small("geom_matinv3d and geom_matmat3d check1", dd*(d3[0] - 1.));
+		checkd_small("geom_matinv3d and geom_matmat3d check2", dd*(d3[1] - 0.));
+		checkd_small("geom_matinv3d and geom_matmat3d check3", dd*(d3[2] - 0.));
+		checkd_small("geom_matinv3d and geom_matmat3d check4", dd*(d3[3] - 0.));
+		checkd_small("geom_matinv3d and geom_matmat3d check5", dd*(d3[4] - 1.));
+		checkd_small("geom_matinv3d and geom_matmat3d check6", dd*(d3[5] - 0.));
+		checkd_small("geom_matinv3d and geom_matmat3d check7", dd*(d3[6] - 0.));
+		checkd_small("geom_matinv3d and geom_matmat3d check8", dd*(d3[7] - 0.));
+		checkd_small("geom_matinv3d and geom_matmat3d check9", dd*(d3[8] - 1.));
 		
 		geom_randf(16, f1);
 		geom_randd(16, d1);
@@ -297,45 +297,70 @@ int main(){
 		}
 		geom_matinv4f(f1);
 		geom_matinv4d(d1);
-		geom_matmat4f(f1, f2);
-		geom_matmat4d(d1, d2);
+		geom_matmat4f(f1, f2, f3);
+		geom_matmat4d(d1, d2, d3);
 		fd = 0.05f;
 		dd = 0.05;
-		checkf_small("geom_matinv4f and geom_matmat4f check1" , fd*(f2[ 0] - 1.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check2" , fd*(f2[ 1] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check3" , fd*(f2[ 2] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check4" , fd*(f2[ 3] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check5" , fd*(f2[ 4] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check6" , fd*(f2[ 5] - 1.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check7" , fd*(f2[ 6] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check8" , fd*(f2[ 7] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check9" , fd*(f2[ 8] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check10", fd*(f2[ 9] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check11", fd*(f2[10] - 1.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check12", fd*(f2[11] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check13", fd*(f2[12] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check14", fd*(f2[13] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check15", fd*(f2[14] - 0.f));
-		checkf_small("geom_matinv4f and geom_matmat4f check16", fd*(f2[15] - 1.f));
-		checkd_small("geom_matinv4d and geom_matmat4d check1" , dd*(d2[ 0] - 1.));
-		checkd_small("geom_matinv4d and geom_matmat4d check2" , dd*(d2[ 1] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check3" , dd*(d2[ 2] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check4" , dd*(d2[ 3] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check5" , dd*(d2[ 4] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check6" , dd*(d2[ 5] - 1.));
-		checkd_small("geom_matinv4d and geom_matmat4d check7" , dd*(d2[ 6] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check8" , dd*(d2[ 7] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check9" , dd*(d2[ 8] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check10", dd*(d2[ 9] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check11", dd*(d2[10] - 1.));
-		checkd_small("geom_matinv4d and geom_matmat4d check12", dd*(d2[11] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check13", dd*(d2[12] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check14", dd*(d2[13] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check15", dd*(d2[14] - 0.));
-		checkd_small("geom_matinv4d and geom_matmat4d check16", dd*(d2[15] - 1.));
+		checkf_small("geom_matinv4f and geom_matmat4f check1" , fd*(f3[ 0] - 1.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check2" , fd*(f3[ 1] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check3" , fd*(f3[ 2] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check4" , fd*(f3[ 3] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check5" , fd*(f3[ 4] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check6" , fd*(f3[ 5] - 1.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check7" , fd*(f3[ 6] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check8" , fd*(f3[ 7] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check9" , fd*(f3[ 8] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check10", fd*(f3[ 9] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check11", fd*(f3[10] - 1.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check12", fd*(f3[11] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check13", fd*(f3[12] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check14", fd*(f3[13] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check15", fd*(f3[14] - 0.f));
+		checkf_small("geom_matinv4f and geom_matmat4f check16", fd*(f3[15] - 1.f));
+		checkd_small("geom_matinv4d and geom_matmat4d check1" , dd*(d3[ 0] - 1.));
+		checkd_small("geom_matinv4d and geom_matmat4d check2" , dd*(d3[ 1] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check3" , dd*(d3[ 2] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check4" , dd*(d3[ 3] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check5" , dd*(d3[ 4] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check6" , dd*(d3[ 5] - 1.));
+		checkd_small("geom_matinv4d and geom_matmat4d check7" , dd*(d3[ 6] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check8" , dd*(d3[ 7] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check9" , dd*(d3[ 8] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check10", dd*(d3[ 9] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check11", dd*(d3[10] - 1.));
+		checkd_small("geom_matinv4d and geom_matmat4d check12", dd*(d3[11] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check13", dd*(d3[12] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check14", dd*(d3[13] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check15", dd*(d3[14] - 0.));
+		checkd_small("geom_matinv4d and geom_matmat4d check16", dd*(d3[15] - 1.));
 	}
 	printf("Failures in matrix inversion routines may be ignored if they are rare.\n");
 	printf("(Randomly generated matrices may be nearly singular.)\n");
+	
+	printf("Checking matsvd\n");
+	for(i = 0; i < 1; ++i){
+		geom_randd(4, d1);
+		geom_matsvd2d(d1, &d2[0], d3, &d2[4]);
+		// Check for orthogonality
+		checkd_small("geom_matsvd2d orth u check1", dd*(d2[0]*d2[0] + d2[1]*d2[1] - 1.));
+		checkd_small("geom_matsvd2d orth u check2", dd*(d2[0]*d2[1] + d2[2]*d2[3] - 0.));
+		checkd_small("geom_matsvd2d orth u check3", dd*(d2[0]*d2[2] + d2[1]*d2[3] - 0.));
+		checkd_small("geom_matsvd2d orth u check4", dd*(d2[2]*d2[2] + d2[3]*d2[3] - 1.));
+		checkd_small("geom_matsvd2d orth v check1", dd*(d2[4]*d2[4] + d2[5]*d2[5] - 1.));
+		checkd_small("geom_matsvd2d orth v check2", dd*(d2[4]*d2[5] + d2[6]*d2[7] - 0.));
+		checkd_small("geom_matsvd2d orth v check3", dd*(d2[4]*d2[6] + d2[5]*d2[7] - 0.));
+		checkd_small("geom_matsvd2d orth v check4", dd*(d2[6]*d2[6] + d2[7]*d2[7] - 1.));
+		d2[0] *= d3[0];
+		d2[1] *= d3[0];
+		d2[2] *= d3[1];
+		d2[3] *= d3[1];
+		geom_matmat2d(&d2[0], &d2[4], d4);
+		// Check that the decomposition is correct
+		checkd_small("geom_matsvd2d check1", dd*(d4[0] - d1[0]));
+		checkd_small("geom_matsvd2d check2", dd*(d4[1] - d1[1]));
+		checkd_small("geom_matsvd2d check3", dd*(d4[2] - d1[2]));
+		checkd_small("geom_matsvd2d check4", dd*(d4[3] - d1[3]));
+	}
 	return 0;
 }
 
