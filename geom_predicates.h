@@ -1,10 +1,17 @@
+#ifndef GEOM_PREDICATES_H_INCLUDED
+#define GEOM_PREDICATES_H_INCLUDED
+
+// Robust geometric predicates by Jonathan Shewchuk
+
+// Must be called before using any of the following functions.
+void geom_predicates_init();
 
 /* Return a positive value if the point pd lies inside the     */
 /* circle passing through pa, pb, and pc; a negative value if  */
 /* it lies outside; and zero if the four points are cocircular.*/
 /* The points pa, pb, and pc must be in counterclockwise       */
 /* order, or the sign of the result will be reversed.          */
-double orient2d(const double *pa, const double *pb, const double *pc);
+double geom_orient2d(const double *pa, const double *pb, const double *pc);
 
 /* Return a positive value if the point pd lies below the      */
 /* plane passing through pa, pb, and pc; "below" is defined so */
@@ -14,14 +21,14 @@ double orient2d(const double *pa, const double *pb, const double *pc);
 /* coplanar.  The result is also a rough approximation of six  */
 /* times the signed volume of the tetrahedron defined by the   */
 /* four points.                                                */
-double orient3d(const double *pa, const double *pb, const double *pc, const double *pd);
+double geom_orient3d(const double *pa, const double *pb, const double *pc, const double *pd);
 
 /* Return a positive value if the point pd lies inside the     */
 /* circle passing through pa, pb, and pc; a negative value if  */
 /* it lies outside; and zero if the four points are cocircular.*/
 /* The points pa, pb, and pc must be in counterclockwise       */
 /* order, or the sign of the result will be reversed.          */
-double incircle(const double *pa, const double *pb, const double *pc, const double *pd);
+double geom_incircle2d(const double *pa, const double *pb, const double *pc, const double *pd);
 
 /* Return a positive value if the point pe lies inside the     */
 /* sphere passing through pa, pb, pc, and pd; a negative value */
@@ -29,8 +36,7 @@ double incircle(const double *pa, const double *pb, const double *pc, const doub
 /* cospherical.  The points pa, pb, pc, and pd must be ordered */
 /* so that they have a positive orientation (as defined by     */
 /* orient3d()), or the sign of the result will be reversed.    */
-double insphere(const double *pa, const double *pb, const double *pc, const double *pd, const double *pe);
-
+double geom_insphere3d(const double *pa, const double *pb, const double *pc, const double *pd, const double *pe);
 
 /*
 
@@ -101,3 +107,4 @@ int v;
 
 */
 
+#endif // GEOM_PREDICATES_H_INCLUDED

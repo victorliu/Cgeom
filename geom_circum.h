@@ -1,3 +1,6 @@
+#ifndef GEOM_CIRCUM_H_INCLUDED
+#define GEOM_CIRCUM_H_INCLUDED
+
 /*****************************************************************************/
 /*                                                                           */
 /*  tetcircumcenter()   Find the circumcenter of a tetrahedron.              */
@@ -24,11 +27,11 @@
 /*                                                                           */
 /*****************************************************************************/
 
-void tetcircumcenter(
-	double a[3],
-	double b[3],
-	double c[3],
-	double d[3],
+void geom_circum_tet3d(
+	const double a[3],
+	const double b[3],
+	const double c[3],
+	const double d[3],
 	double circumcenter[3],
 	double *xi,
 	double *eta,
@@ -58,10 +61,10 @@ void tetcircumcenter(
 /*                                                                           */
 /*****************************************************************************/
 
-void tricircumcenter(
-	double a[2],
-	double b[2],
-	double c[2],
+void geom_circum_tri2d(
+	const double a[2],
+	const double b[2],
+	const double c[2],
 	double circumcenter[2],
 	double *xi,
 	double *eta
@@ -90,12 +93,13 @@ void tricircumcenter(
 /*                                                                           */
 /*****************************************************************************/
 
-void tricircumcenter3d(
-	double a[3],
-	double b[3],
-	double c[3],
+void geom_circum_tri3d(
+	const double a[3],
+	const double b[3],
+	const double c[3],
 	double circumcenter[3],
 	double *xi,
 	double *eta
 );
 
+#endif // GEOM_CIRCUM_H_INCLUDED
