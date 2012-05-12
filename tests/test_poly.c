@@ -181,7 +181,7 @@ int main(){
 	{
 		// Generate random inequalities
 		m = 17;
-		n = 64;
+		n = 16;
 		geom_randf(4*m, fv);
 		geom_randd(4*m, dv);
 		// Dump file
@@ -249,6 +249,18 @@ int main(){
 					if(geom_convex_inside3d(m, dv, d1)){
 						fprintf(fpd, "p{%g,%g,%g}\nb{-1,bs}\n", f1[0], f1[1], f1[2]);
 					}
+					
+					// draw normals
+					geom_convex_normal3f(m, fv, f1, f2);
+					fprintf(fpf, "p{%g,%g,%g}\np{%g,%g,%g}\nv{-2,-1}\n",
+						f1[0], f1[1], f1[2],
+						f1[0]+f2[0]/n, f1[1]+f2[1]/n, f1[2]+f2[2]/n
+					);
+					geom_convex_normal3d(m, dv, d1, d2);
+					fprintf(fpd, "p{%g,%g,%g}\np{%g,%g,%g}\nv{-2,-1}\n",
+						d1[0], d1[1], d1[2],
+						d1[0]+d2[0]/n, d1[1]+d2[1]/n, d1[2]+d2[2]/n
+					);
 				}
 			}
 		}
