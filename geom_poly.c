@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <math.h>
 #include <geom_la.h>
 #include <float.h>
@@ -438,7 +439,7 @@ static void refine(unsigned int np, const double *p, const Settings *settings, W
 static void init_vars2(unsigned int np, const double *p, const double dir[3], const Settings *settings, Workspace *work){
 	// Calculates a better starting point, using a similar approach to CVXOPT
 	unsigned int i;
-	double *x, *s, *z, *y;
+	double *x, *s, *z;
 	double alpha;
 
 	// Make sure sinvz is 1 to make hijacked KKT system ok
@@ -511,7 +512,7 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 	unsigned int i;
 	int iter;
 
-	double *dx, *ds, *dy, *dz;
+	double *dx, *ds, *dz;
 	double minval;
 	double alpha;
 	
