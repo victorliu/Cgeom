@@ -17,6 +17,13 @@ double geom_normalize3d(double v[3]);
 float  geom_normalize4f(float  v[4]);
 double geom_normalize4d(double v[4]);
 
+float  geom_dot2f(const float  a[2], const float  b[2]);
+double geom_dot2d(const double a[2], const double b[2]);
+float  geom_dot3f(const float  a[3], const float  b[3]);
+double geom_dot3d(const double a[3], const double b[3]);
+float  geom_dot4f(const float  a[4], const float  b[4]);
+double geom_dot4d(const double a[4], const double b[4]);
+
 // Cross product in 3D
 void geom_cross3f(const float  a[3], const float  b[3], float  result[3]);
 void geom_cross3d(const double a[3], const double b[3], double result[3]);
@@ -37,6 +44,13 @@ void geom_matvec3f(const float  m[9],  const float  x[3], float  y[3]);
 void geom_matvec3d(const double m[9],  const double x[3], double y[3]);
 void geom_matvec4f(const float  m[16], const float  x[4], float  y[4]);
 void geom_matvec4d(const double m[16], const double x[4], double y[4]);
+
+void geom_matTvec2f(const float  m[4],  const float  x[2], float  y[2]);
+void geom_matTvec2d(const double m[4],  const double x[2], double y[2]);
+void geom_matTvec3f(const float  m[9],  const float  x[3], float  y[3]);
+void geom_matTvec3d(const double m[9],  const double x[3], double y[3]);
+void geom_matTvec4f(const float  m[16], const float  x[4], float  y[4]);
+void geom_matTvec4d(const double m[16], const double x[4], double y[4]);
 
 // Overwrites b with the matrix-matrix product a.b
 void geom_matmat2f(const float  a[4],  const float  b[4], float  c[4]);

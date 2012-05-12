@@ -119,6 +119,25 @@ double geom_normalize4d(double v[4]){
 	return n;
 }
 
+float  geom_dot2f(const float  a[2], const float  b[2]){
+	return a[0]*b[0] + a[1]*b[1];
+}
+double geom_dot2d(const double a[2], const double b[2]){
+	return a[0]*b[0] + a[1]*b[1];
+}
+float  geom_dot3f(const float  a[3], const float  b[3]){
+	return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+}
+double geom_dot3d(const double a[3], const double b[3]){
+	return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+}
+float  geom_dot4f(const float  a[4], const float  b[4]){
+	return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+}
+double geom_dot4d(const double a[4], const double b[4]){
+	return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+}
+
 void geom_cross3f(const float  a[3], const float  b[3], float  result[3]){
 	result[0] = a[1]*b[2] - a[2]*b[1];
 	result[1] = a[2]*b[0] - a[0]*b[2];
@@ -200,6 +219,37 @@ void geom_matvec4d(const double m[16], const double u[4], double v[4]){
 	v[1] = m[1] * u[0] + m[5] * u[1] + m[ 9] * u[2] + m[13] * u[3];
 	v[2] = m[2] * u[0] + m[6] * u[1] + m[10] * u[2] + m[14] * u[3];
 	v[3] = m[3] * u[0] + m[7] * u[1] + m[11] * u[2] + m[15] * u[3];
+}
+
+void geom_matTvec2f(const float  m[4], const float x[2], float y[2]){
+	y[0] = m[0] * x[0] + m[1] * x[1];
+	y[1] = m[2] * x[0] + m[3] * x[1];
+}
+void geom_matTvec2d(const double m[4], const double x[2], double y[2]){
+	y[0] = m[0] * x[0] + m[1] * x[1];
+	y[1] = m[2] * x[0] + m[3] * x[1];
+}
+void geom_matTvec3f(const float  m[9],  const float u[3], float v[3]){
+	v[0] = m[0] * u[0] + m[1] * u[1] + m[2] * u[2];
+	v[1] = m[3] * u[0] + m[4] * u[1] + m[5] * u[2];
+	v[2] = m[6] * u[0] + m[7] * u[1] + m[8] * u[2];
+}
+void geom_matTvec3d(const double m[9],  const double u[3], double v[3]){
+	v[0] = m[0] * u[0] + m[1] * u[1] + m[2] * u[2];
+	v[1] = m[3] * u[0] + m[4] * u[1] + m[5] * u[2];
+	v[2] = m[6] * u[0] + m[7] * u[1] + m[8] * u[2];
+}
+void geom_matTvec4f(const float  m[16], const float u[4], float v[4]){
+	v[0] = m[ 0] * u[0] + m[ 1] * u[1] + m[ 2] * u[2] + m[ 3] * u[3];
+	v[1] = m[ 4] * u[0] + m[ 5] * u[1] + m[ 6] * u[2] + m[ 7] * u[3];
+	v[2] = m[ 8] * u[0] + m[ 9] * u[1] + m[10] * u[2] + m[11] * u[3];
+	v[3] = m[12] * u[0] + m[13] * u[1] + m[14] * u[2] + m[15] * u[3];
+}
+void geom_matTvec4d(const double m[16], const double u[4], double v[4]){
+	v[0] = m[ 0] * u[0] + m[ 1] * u[1] + m[ 2] * u[2] + m[ 3] * u[3];
+	v[1] = m[ 4] * u[0] + m[ 5] * u[1] + m[ 6] * u[2] + m[ 7] * u[3];
+	v[2] = m[ 8] * u[0] + m[ 9] * u[1] + m[10] * u[2] + m[11] * u[3];
+	v[3] = m[12] * u[0] + m[13] * u[1] + m[14] * u[2] + m[15] * u[3];
 }
 
 void geom_matmat2f(const float a[4], const float b[4], float c[4]){
