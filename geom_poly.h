@@ -33,4 +33,8 @@ int geom_convex_inside3d(unsigned int np, const double *p, const double r[3]);
 void geom_convex_normal3f(unsigned int np, const float  *p, const float  r[3], float  n[3]);
 void geom_convex_normal3d(unsigned int np, const double *p, const double r[3], double n[3]);
 
+// Computes the most extremal point r in the direction dir
+// wksp can be NULL, or size 18*np+21
+int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], double r[3], double *wksp);
+
 #endif // GEOM_POLY_H_INCLUDED
