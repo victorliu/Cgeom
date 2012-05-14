@@ -216,7 +216,7 @@ int geom_convex_inside3d(unsigned int np, const double *p, const double r[3]){
 void geom_convex_normal3f(unsigned int np, const float  *p, const float  r[3], float  n[3]){
 	unsigned int i;
 	float maxdist = -FLT_MAX;
-	n[0] = 0.f; n[1] = 0.f; n[3] = 0.f;
+	n[0] = 0.f; n[1] = 0.f; n[2] = 0.f;
 	for(i = 0; i < np; ++i){
 		float d = p[4*i+0] * r[0] + p[4*i+1] * r[1] + p[4*i+2] * r[2] - p[4*i+3];
 		if(d >= maxdist){
@@ -231,7 +231,7 @@ void geom_convex_normal3f(unsigned int np, const float  *p, const float  r[3], f
 void geom_convex_normal3d(unsigned int np, const double *p, const double r[3], double n[3]){
 	unsigned int i;
 	double maxdist = -DBL_MAX;
-	n[0] = 0.; n[1] = 0.; n[3] = 0.;
+	n[0] = 0.; n[1] = 0.; n[2] = 0.;
 	for(i = 0; i < np; ++i){
 		double d = p[4*i+0] * r[0] + p[4*i+1] * r[1] + p[4*i+2] * r[2] - p[4*i+3];
 		if(d >= maxdist){
@@ -506,6 +506,9 @@ static void init_vars2(unsigned int np, const double *p, const double dir[3], co
 	}
 }
 
+// Solves the following linear program:
+//  min -dir' * r
+//  s.t. p' * [r;1] <= 0
 int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], double r[3], double *wksp){
 	const unsigned int n23 = 2*np+3;
 	Settings settings;
