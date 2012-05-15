@@ -187,6 +187,7 @@ static void geom_bvh2d_STR(unsigned int *n_, geom_bvh2d *B){
 geom_bvh2d geom_bvh2d_new(unsigned int n, int (*shape_iterator)(double c[2], double h[2], int *tag, void *data), void *data){
 	unsigned int i;
 	
+	// Make n boxes for each of the input boxes
 	geom_bvh2d *B = (geom_bvh2d*)malloc(sizeof(geom_bvh2d) * n);
 	geom_bvh2d ret;
 	for(i = 0; i < n; ++i){
@@ -200,6 +201,7 @@ geom_bvh2d geom_bvh2d_new(unsigned int n, int (*shape_iterator)(double c[2], dou
 		BVHDBG("Making leaf %p, tag=%d, b=%f,%f,%f,%f\n", B[i], B[i]->tag, B[i]->b[0], B[i]->b[1], B[i]->b[2], B[i]->b[3]);
 	}
 	
+	// Create the tree
 	while(n > 1){
 		geom_bvh2d_STR(&n, B);
 	}
