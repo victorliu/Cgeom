@@ -1,0 +1,4 @@
+geom_la:
+	transposed matvec not tested since it is used in geom_shapes, and very little can go wrong.
+geom_poly:
+	bound3d not fully tested since it is used in geom_shapes for computing AABBs.
