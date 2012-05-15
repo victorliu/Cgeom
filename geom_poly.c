@@ -403,19 +403,6 @@ static void multKKT(unsigned int n, const double *s_inv_z, const double *A, unsi
 	}
 }
 
-static void init_vars(unsigned int np, const double *p, const Settings *settings, Workspace *work){
-	unsigned int i;
-	for(i = 0; i < 3; i++){
-		work->x[i] = 0;
-	}
-	for(i = 0; i < np; i++){
-		work->x[3+i] = (p[4*i+3] > 0) ? p[4*i+3] : settings->s_init;
-	}
-	for(i = 0; i < np; i++){
-		work->x[np+3+i] = settings->z_init;
-	}
-}
-
 static void refine(unsigned int np, const double *p, const Settings *settings, Workspace *work, const double *b, double *x){
 	const unsigned int n23 = 2*np+3;
 	unsigned int i, j;
@@ -553,8 +540,18 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 	// z is &work.x[np+3], size np
 
 	//printf("iter     objv        gap       |Gx+s-h|    step\n");
+	/*
+	for(i = 0; i < 3; i++){
+		work.x[i] = 0;
+	}
+	for(i = 0; i < np; i++){
+		work.x[3+i] = (p[4*i+3] > 0) ? p[4*i+3] : settings.s_init;
+	}
+	for(i = 0; i < np; i++){
+		work.x[np+3+i] = settings.z_init;
+	}
+	*/
 	init_vars2(np, p, dir, &settings, &work);
-	//init_vars(np, p, &settings, &work);
 	
 	for(iter = 0; iter < settings.max_iters; iter++){
 		for(i = 0; i < np; i++){
