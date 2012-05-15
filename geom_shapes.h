@@ -160,6 +160,7 @@ int geom_shape3d_contains(const geom_shape3d *s, const double p[3]);
 int geom_shape2d_contains(const geom_shape2d *s, const double p[2]);
 
 // Compute the bounding box of the shape.
+// Returns 0 on success, 1 if unbounded.
 int geom_shape3d_get_aabb(const geom_shape3d *s, geom_aabb3d *b);
 int geom_shape2d_get_aabb(const geom_shape2d *s, geom_aabb2d *b);
 

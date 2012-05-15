@@ -230,7 +230,7 @@ int geom_shape2d_get_aabb(const geom_shape2d *s2d, geom_aabb2d *b){
 			return 0;
 		}
 	default:
-		return 1;
+		return -1;
 	}
 }
 
@@ -321,6 +321,7 @@ int geom_shape3d_get_aabb(const geom_shape3d *s, geom_aabb3d *b){
 		b->h[1] = DBL_MAX;
 		b->h[2] = DBL_MAX;
 		{
+			int ret = 0;
 			unsigned a;
 			double *wksp = (double*)malloc(sizeof(double) * (18*s->s.poly.np+21));
 			for(a = 0; a < 3; ++a){
@@ -332,13 +333,18 @@ int geom_shape3d_get_aabb(const geom_shape3d *s, geom_aabb3d *b){
 					if(0 == geom_convex_bound3d(s->s.poly.np, s->s.poly.p, dir, rmn, wksp)){
 						b->c[a] = 0.5*rmn[a] + 0.5*rmx[a];
 						b->h[a] = 0.5*(rmx[a] - rmn[a]);
+					}else{
+						ret = 1;
 					}
+				}else{
+					ret = 1;
 				}
 			}
 			free(wksp);
+			return ret;
 		}
 	default:
-		return 1;
+		return -1;
 	}
 }
 
