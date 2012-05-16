@@ -3,6 +3,9 @@
 
 // Robust geometric predicates by Jonathan Shewchuk
 
+double geom_rand_unifd();
+float  geom_rand_uniff();
+
 // Must be called before using any of the following functions.
 void geom_predicates_init();
 

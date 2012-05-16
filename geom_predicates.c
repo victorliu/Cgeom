@@ -546,15 +546,14 @@ static double narrowdoublerand()
 /*                                                                           */
 /*****************************************************************************/
 
-static double uniformdoublerand()
-{
-  double result;
-  long a, b;
+double geom_rand_unifd(){
+	double result;
+	long a, b;
 
-  a = random();
-  b = random();
-  result = (double) (a - 1073741824) * 8388608.0 + (double) (b >> 8);
-  return result;
+	a = random();
+	b = random();
+	result = (double) (a - 1073741824) * 8388608.0 + (double) (b >> 8);
+	return result;
 }
 
 /*****************************************************************************/
@@ -613,14 +612,13 @@ static float narrowfloatrand()
 /*                                                                           */
 /*****************************************************************************/
 
-static float uniformfloatrand()
-{
-  float result;
-  long a;
+float geom_rand_uniff(){
+	float result;
+	long a;
 
-  a = random();
-  result = (float) ((a - 1073741824) >> 6);
-  return result;
+	a = random();
+	result = (float) ((a - 1073741824) >> 6);
+	return result;
 }
 
 /*****************************************************************************/
