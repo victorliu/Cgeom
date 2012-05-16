@@ -3,6 +3,19 @@
 
 // Basic linear algebra functions for spatial geometry
 
+unsigned geom_imin2f(const float  v[2]);
+unsigned geom_imin2d(const double v[2]);
+unsigned geom_imin3f(const float  v[3]);
+unsigned geom_imin3d(const double v[3]);
+unsigned geom_imin4f(const float  v[4]);
+unsigned geom_imin4d(const double v[4]);
+unsigned geom_imax2f(const float  v[2]);
+unsigned geom_imax2d(const double v[2]);
+unsigned geom_imax3f(const float  v[3]);
+unsigned geom_imax3d(const double v[3]);
+unsigned geom_imax4f(const float  v[4]);
+unsigned geom_imax4d(const double v[4]);
+
 // 2, 3, and 4D norms and normalization
 float  geom_norm2f(const float  v[2]);
 double geom_norm2d(const double v[2]);
@@ -70,5 +83,15 @@ void geom_matinv4d(double m[16]);
 
 // Computes the SVD of m = u.diag(s).vt
 void geom_matsvd2d(const double m[4], double u[4], double s[2], double vt[4]);
+
+// Solves the quadratic equation
+//   a*x^2 + 2*b*x + c == 0
+// Note the extra factor of 2 on the linear term.
+int geom_quadraticd(
+	const double a,
+	const double b,
+	const double c,
+	double root[2]
+);
 
 #endif // GEOM_LA_H_INCLUDED

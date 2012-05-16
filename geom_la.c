@@ -1,6 +1,71 @@
 #include <math.h>
 #include <string.h>
 
+unsigned geom_imin2f(const float  v[2]){
+	return (v[0] < v[1]) ? 0 : 1;
+}
+unsigned geom_imin2d(const double v[2]){
+	return (v[0] < v[1]) ? 0 : 1;
+}
+unsigned geom_imin3f(const float  v[3]){
+	unsigned i = 0;
+	if(v[1] < v[i]){ i = 1; }
+	if(v[2] < v[i]){ i = 2; }
+	return i;
+}
+unsigned geom_imin3d(const double v[3]){
+	unsigned i = 0;
+	if(v[1] < v[i]){ i = 1; }
+	if(v[2] < v[i]){ i = 2; }
+	return i;
+}
+unsigned geom_imin4f(const float  v[4]){
+	unsigned i = 0;
+	if(v[1] < v[i]){ i = 1; }
+	if(v[2] < v[i]){ i = 2; }
+	if(v[3] < v[i]){ i = 3; }
+	return i;
+}
+unsigned geom_imin4d(const double v[4]){
+	unsigned i = 0;
+	if(v[1] < v[i]){ i = 1; }
+	if(v[2] < v[i]){ i = 2; }
+	if(v[3] < v[i]){ i = 3; }
+	return i;
+}
+unsigned geom_imax2f(const float  v[2]){
+	return (v[0] > v[1]) ? 0 : 1;
+}
+unsigned geom_imax2d(const double v[2]){
+	return (v[0] > v[1]) ? 0 : 1;
+}
+unsigned geom_imax3f(const float  v[3]){
+	unsigned i = 0;
+	if(v[1] > v[i]){ i = 1; }
+	if(v[2] > v[i]){ i = 2; }
+	return i;
+}
+unsigned geom_imax3d(const double v[3]){
+	unsigned i = 0;
+	if(v[1] > v[i]){ i = 1; }
+	if(v[2] > v[i]){ i = 2; }
+	return i;
+}
+unsigned geom_imax4f(const float  v[4]){
+	unsigned i = 0;
+	if(v[1] > v[i]){ i = 1; }
+	if(v[2] > v[i]){ i = 2; }
+	if(v[3] > v[i]){ i = 3; }
+	return i;
+}
+unsigned geom_imax4d(const double v[4]){
+	unsigned i = 0;
+	if(v[1] > v[i]){ i = 1; }
+	if(v[2] > v[i]){ i = 2; }
+	if(v[3] > v[i]){ i = 3; }
+	return i;
+}
+
 float geom_norm2f(const float v[2]){
 	float x = fabsf(v[0]);
 	float y = fabsf(v[1]);
@@ -522,4 +587,33 @@ void geom_matsvd2d(const double m[4], double u[4], double s[2], double vt[4]){
 	u[3] = b[0];
 	geom_normalize2d(&u[0]);
 	geom_normalize2d(&u[2]);
+}
+
+int geom_quadraticd(
+	const double a,
+	const double b,
+	const double c,
+	double root[2]
+){
+	if(NULL == root){ return -4; }
+	if(0 == a){
+		if(0 == b){
+			// impossible to solve
+			return 0;
+		}else{
+			root[0] = -0.5*c/b;
+		}
+	}
+	double disc = b*b - a*c;
+	if(0 > disc){
+		return 0;
+	}else if(0 == disc){
+		root[0] = b/a;
+		return 1;
+	}else{
+		double z = -b - copysign(sqrt(disc), b);
+		root[0] = z/a;
+		root[1] = c/z;
+		return 2;
+	}
 }
