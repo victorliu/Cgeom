@@ -47,12 +47,19 @@ typedef struct{
 
 
 typedef enum{
+	GEOM_SHAPE3D_TET, // tetrahedron
 	GEOM_SHAPE3D_BLOCK, // parallelopiped, axes not necessarily perpendicular
 	GEOM_SHAPE3D_POLY, // convex polyhedron; intersection of a set of halfspaces
 	GEOM_SHAPE3D_ELLIPSOID, // axes not necessarily perpendicular
 	GEOM_SHAPE3D_FRUSTUM, // encompasses cylinder and cone
 	GEOM_SHAPE3D_EXTRUSION // a 2D shape extruded along a 3rd axis
 } geom_shape3d_type;
+
+typedef struct{
+	double v[12]; // vertices (4 xyz triples relative to local origin)
+	// v must be in positive orientation, that is, if v = {a,b,c,d},
+	// dot(cross(b-a,c-a),d-a) > 0
+} geom_shape3d_tet;
 
 typedef struct{
 	double A[9]; // semi axes in columns
@@ -113,6 +120,7 @@ typedef struct{
 	int tag; // user data
 	double org[3]; // origin point
 	union{
+		geom_shape3d_tet       tet;
 		geom_shape3d_block     block;
 		geom_shape3d_poly      poly;
 		geom_shape3d_ellipsoid ellipsoid;
@@ -155,6 +163,18 @@ int geom_aabb2d_contains(const geom_aabb2d *b, const double p[2]);
 int geom_aabb3d_intersects(const geom_aabb3d *a, const geom_aabb3d *b);
 int geom_aabb2d_intersects(const geom_aabb2d *a, const geom_aabb2d *b);
 
+// Finishes the initialization depending on the shape.
+// 2D:
+//   ellipse: Fills in B from A
+// 3D:
+//   tet: ensures positive orientation
+//   ellipsoid, block: Fills in B from A
+//   frustum: fills in first two columns of Q from last column and normalizes
+//   extrusion: same as frustum, but also calls 2D init
+// Returns -1 on error
+int geom_shape3d_init(geom_shape3d *s);
+int geom_shape2d_init(geom_shape2d *s);
+
 // Determines if p lies within the shape. Returns 0 if no, 1 if yes.
 int geom_shape3d_contains(const geom_shape3d *s, const double p[3]);
 int geom_shape2d_contains(const geom_shape2d *s, const double p[2]);
@@ -170,6 +190,21 @@ int geom_shape2d_get_aabb(const geom_shape2d *s, geom_aabb2d *b);
 int geom_shape3d_normal(const geom_shape3d *s, const double p[3], double n[3]);
 int geom_shape2d_normal(const geom_shape2d *s, const double p[2], double n[2]);
 
+// Computes the approximate overlapping volume/area between a shape and
+// the given simplex using O(n^d) samples. The returned value is the
+// fraction of sample points inside the simplex.
+double geom_shape3d_approx_simplex_overlap(const geom_shape3d *s, const double torg[3], const double t[12], unsigned int n);
+double geom_shape2d_approx_simplex_overlap(const geom_shape2d *s, const double torg[2], const double t[6], unsigned int n);
+/*
+// Determines whether or not the shape intersects a simplex.
+// Assumes the simplex is positively oriented.
+// Returns 0 if the shape and simplex are completely disjoint
+//         1 if the simplex is completely inside the shape
+//         2 if the shape is completely inside the simplex
+//         3 if the simplex is partially inside the shape
+int geom_shape2d_intersects_simplex(const geom_shape2d *s, const double torg[2], const double t[6]);
+int geom_shape3d_intersects_simplex(const geom_shape3d *s, const double torg[3], const double t[12]);
+*/
 /*
 // Determines if two shapes intersect. Returns 0 if no, 1 if yes.
 int geom_shape3d_intersects(const geom_shape3 *s, const geom_shape3 *t);
@@ -179,12 +214,6 @@ int geom_shape2d_intersects(const geom_shape2 *s, const geom_shape2 *t);
 // the given box.
 int geom_shape3d_aabb_overlap(const geom_shape3 *s, const geom_aabb3 *b);
 int geom_shape2d_aabb_overlap(const geom_shape2 *s, const geom_aabb2 *b);
-
-// Computes the overlapping volume/area between a shape and
-// the given simplex. The orientation of the simplex determines
-// the sign of the returned volume.
-double geom_shape3d_simplex_overlap(const geom_shape3 *s, const double t[12]);
-double geom_shape2d_simplex_overlap(const geom_shape2 *s, const double t[6]);
 
 // Determines if a shape intersects a given line segment defined by the point
 // and vector. Returns the number of intersections (up to 2) in t. The values

@@ -99,6 +99,25 @@ int main(int argc, char *argv[]){
 		printf("Check file test_shapes2d.ps\n");
 	}
 	n = 16;
+	if(1){
+		printf("Testing tet\n");
+		FILE *fp = fopen("test_shapes3d_tet.pvf", "wb");
+		fprintf(fp, "PVF(1)\n");
+		fprintf(fp, "bs = %g\n", 1./n);
+		
+		s3d = (geom_shape3d*)malloc(sizeof(geom_shape3d));
+		s3d->type = GEOM_SHAPE3D_TET;
+		geom_randd(3, s3d->org);
+		//s3d->org[0] = 0; s3d->org[1] = 0; s3d->org[2] = 0;
+		geom_randd(12, s3d->s.tet.v);
+		
+		geom_shape3d_init(s3d);
+		geom_shape3d_get_aabb(s3d, &b3d1);
+		draw_aabb3(fp, &b3d1);
+		
+		draw_samples(fp, s3d, n);
+		free(s3d);
+	}
 	if(0){
 		printf("Testing ellipsoid\n");
 		FILE *fp = fopen("test_shapes3d_ellipsoid.pvf", "wb");
@@ -182,7 +201,7 @@ int main(int argc, char *argv[]){
 		draw_samples(fp, s3d, n);
 		free(s3d);
 	}
-	if(1){
+	if(0){
 		printf("Testing polyhedron\n");
 		m = 11;
 		FILE *fp = fopen("test_shapes3d_poly.pvf", "wb");
