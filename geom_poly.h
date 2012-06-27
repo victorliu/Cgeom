@@ -37,4 +37,18 @@ void geom_convex_normal3d(unsigned int np, const double *p, const double r[3], d
 // wksp can be NULL, or size 18*np+21
 int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], double r[3], double *wksp);
 
+// An n-sided polygon always has n-2 triangles in its triangulation.
+int geom_polygon_triangulate2d(
+	unsigned int nv, const double *v, // the polygon
+	unsigned int *t // length 3*(n-2), stores the triangle as triples of vertex indices into v
+);
+int geom_convex_polygon_intersection2d(
+	unsigned int nP, // >= 3
+	const double *P,
+	unsigned int nQ, // >= 3
+	const double *Q,
+	unsigned int *ni, // on input, size of Pi (>= nP+nQ), on output, numer of points in Pi
+	double *Pi // output intersection polygon
+);
+
 #endif // GEOM_POLY_H_INCLUDED

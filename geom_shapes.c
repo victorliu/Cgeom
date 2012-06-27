@@ -1,11 +1,12 @@
-#include <geom_predicates.h>
-#include <geom_la.h>
-#include <geom_poly.h>
-#include <geom_shapes.h>
+#include <Cgeom/geom_predicates.h>
+#include <Cgeom/geom_la.h>
+#include <Cgeom/geom_poly.h>
+#include <Cgeom/geom_shapes.h>
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define FFMT "%.14g"
 
@@ -462,6 +463,46 @@ int geom_shape3d_init(geom_shape3d *s){
 	}
 }
 
+geom_shape3d *geom_shape3d_clone(geom_shape3d *s){
+	if(NULL == s){ return NULL; }
+	geom_shape3d *r = NULL;
+	size_t sz = sizeof(geom_shape2d);
+	switch(s->type){
+	case GEOM_SHAPE3D_POLY:
+		sz += sizeof(double) * 4*(s->s.poly.np-1);
+		break;
+	case GEOM_SHAPE3D_EXTRUSION:
+		switch(s->s.extrusion.s2.type){
+		case GEOM_SHAPE2D_POLYGON:
+			sz += sizeof(double) * 2*(s->s.extrusion.s2.s.polygon.nv-1);
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+	r = (geom_shape3d*)malloc(sz);
+	memcpy(r, s, sz);
+	return r;
+}
+geom_shape2d *geom_shape2d_clone(geom_shape2d *s){
+	if(NULL == s){ return NULL; }
+	geom_shape2d *r = NULL;
+	size_t sz = sizeof(geom_shape2d);
+	switch(s->type){
+	case GEOM_SHAPE2D_POLYGON:
+		sz += sizeof(double) * 2*(s->s.polygon.nv-1);
+		break;
+	default:
+		break;
+	}
+	r = (geom_shape2d*)malloc(sz);
+	memcpy(r, s, sz);
+	return r;
+}
+
 static int geom_shape2d_contains_org(const geom_shape2d *s, const double p[2]){
 	switch(s->type){
 	case GEOM_SHAPE2D_ELLIPSE:
@@ -718,13 +759,13 @@ int geom_shape3d_normal(const geom_shape3d *s, const double p[3], double n[3]){
 	return 0;
 }
 
-double geom_shape2d_approx_simplex_overlap(const geom_shape2d *s, const double torg[2], const double t[6], unsigned int n){
+double geom_shape2d_simplex_overlap_stratified(const geom_shape2d *s, const double torg[2], const double t[6], unsigned int n){
 	const double org[2] = { torg[0]-s->org[0], torg[1]-s->org[1] };
 	unsigned int i, j;
 	unsigned int count = 0;
 	double in = 1./n;
 	for(i = 0; i < n; ++i){
-		for(j = 0; j < n; ++j){
+		for(j = 0; j < n-i; ++j){
 			double a = in*(i + (1./3.));
 			double b = in*(j + (1./3.));
 			double c = 1-a-b;
@@ -740,7 +781,7 @@ double geom_shape2d_approx_simplex_overlap(const geom_shape2d *s, const double t
 	return (double)count*2. / (double)(n*(n+1));
 }
 
-double geom_shape3d_approx_simplex_overlap(const geom_shape3d *s,const double torg[3],  const double t[12], unsigned int n){
+double geom_shape3d_simplex_overlap_stratified(const geom_shape3d *s,const double torg[3],  const double t[12], unsigned int n){
 	const double org[3] = { torg[0]-s->org[0], torg[1]-s->org[1], torg[2]-s->org[2] };
 	unsigned int i, j, k;
 	unsigned int count = 0;
@@ -766,6 +807,318 @@ double geom_shape3d_approx_simplex_overlap(const geom_shape3d *s,const double to
 	return (double)count*6. / (double)(n*(n+1)*(n+2));
 }
 
+
+// circle radius r=1, chord length s
+// r > 0, s > 0, 2*r > s
+static double circular_sector_area(double s){
+	if(s <= 0){ return 0; }
+
+	// area = area of circular wedge - area of triangle part
+	// area = theta*r*r - s/2*sqrt(r^2 - (s/2)^2)
+	s *= 0.5;
+	// area = asin(s/r)*r*r - s*sqrt(r^2 - s^2)
+	// area = r*s*[ asin(s/r)/(s/r) - sqrt(1-(s/r)^2) ]
+	double x = s;
+	if(x < (1./32.)){ // use taylor expansion for stuff in brackets
+		static const double c2 = 2./3.;
+		static const double c4 = 1./5.;
+		static const double c6 = 3./28.;
+		static const double c8 = 3./72.;
+		x *= x;
+		return s*(c2 + (c4 + (c6 + c8*x)*x)*x)*x;
+	}else{
+		return s*(asin(x)/x - sqrt((1.+x)*(1.-x)));
+	}
+}
+// returns 1 if inside or on boundary, 0 otherwise
+static int triangle_contains(
+	const double org[2], // triangle vertices are {org,org+u,org+v}, in CCW orientation
+	const double u[2],
+	const double v[2],
+	const double p[2] // query point
+){
+	if(geom_orient2d(org,u,p) >= 0){
+		if(geom_orient2d(org,v,p) <= 0){
+			// treat org as origin, we have points u and v, just need p-org
+			double x[2] = {p[0] - org[0], p[1] - org[1]};
+			if(geom_orient2d(u,v,x) >= 0){
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+static double circle_triangle_overlap( // circle is centered at origin with unit radius
+	// triangle vertices: {org, org+u, org+v} are in CCW orientation
+	const double tri_org[2],
+	const double tri_u[2],
+	const double tri_v[2]
+){
+	const double origin[2] = {0,0};
+	int i, j;
+	int inside = 0; // bitfield of which triangle vertices are in circle, 4th bit is if circle center is in triangle
+	
+	double vert[6];
+	vert[2*0+0] = tri_org[0];
+	vert[2*0+1] = tri_org[1];
+	vert[2*1+0] = (tri_org[0] + tri_u[0]);
+	vert[2*1+1] = (tri_org[1] + tri_u[1]);
+	vert[2*2+0] = (tri_org[0] + tri_v[0]);
+	vert[2*2+1] = (tri_org[1] + tri_v[1]);
+	
+	double vert_org[6];
+	vert_org[2*0+0] = 0;
+	vert_org[2*0+1] = 0;
+	vert_org[2*1+0] = tri_u[0];
+	vert_org[2*1+1] = tri_u[1];
+	vert_org[2*2+0] = tri_v[0];
+	vert_org[2*2+1] = tri_v[1];
+	
+	double tri_r[3]; // distance from circle center of each vertex of triangle, normalized to radius
+	for(i = 0; i < 3; ++i){
+		tri_r[i] = geom_norm2d(&vert[2*i+0]);
+		if(tri_r[i] <= 1.0){ inside |= (1<<i); }
+	}
+	if(triangle_contains(tri_org, tri_u, tri_v, origin)){ inside |= (1<<3); }
+	if((inside & 0x7) == 0x7){ // all triangle points in circle
+		return 0.5*fabs(geom_orient2d(origin,tri_u,tri_v));
+	}
+
+	double seg[6];
+	seg[2*0+0] = tri_u[0];
+	seg[2*0+1] = tri_u[1];
+	seg[2*1+0] = (tri_v[0] - tri_u[0]);
+	seg[2*1+1] = (tri_v[1] - tri_u[1]);
+	seg[2*2+0] = -tri_v[0];
+	seg[2*2+1] = -tri_v[1];
+	
+	double side_length[3]; // normalized to radius
+	for(i = 0; i < 3; ++i){
+		side_length[i] = geom_norm2d(&seg[2*i+0]);
+	}
+	
+	double seg_dot[3]; // p0.(p1-p0)/r^2
+	for(i = 0; i < 3; ++i){
+		seg_dot[i] = (vert[2*i+0]*seg[2*i+0] + vert[2*i+1]*seg[2*i+1]);
+	}
+	
+	// Get intersections of each segment with each circle
+	// segment 0 is org to u, segment 1 is u to v, segment 2 is v to org
+	double xp[12]; // intersection points
+	int nxp[3]; // number of intersections with each segment
+	int nx = 0;
+	for(i = 0; i < 3; ++i){
+		int ip1 = (i+1)%3;
+		int in0 = (inside & (1<<i)) ? 1 : 0;
+		int in1 = (inside & (1<<ip1)) ? 1 : 0;
+		if(in0 && in1){
+			nxp[i] = 0;
+		}else{
+			// line:   x = p0 + t(p1-p0)
+			// circle: x^2 = r^2
+			// (p0 + t(p1-p0))^2 = r^2
+			// t^2(p1-p0)^2 + 2t(p0).(p1-p0) + (p0)^2 - r^2 = 0
+			// t^2 * side_length^2 + 2*t*seg_dot + tri_r^2 - 1 = 0
+			// t = -seg_dot/side_length^2 +/- sqrt(seg_dot^2/side_length^4 - (tri_r^2-1)/side_length^2)
+			double isl2 = 1./(side_length[i]*side_length[i]);
+			double disc = (seg_dot[i]*seg_dot[i]*isl2 - (tri_r[i]*tri_r[i]-1)) * isl2;
+			double t0 = -seg_dot[i]*isl2;
+			double t, t2, tdist, t2dist;
+			if(in0 != in1){
+				// get the one intersection point
+				nxp[i] = 1;
+				nx += 1;
+
+				if(disc < 0){ disc = 0; }
+				disc = sqrt(disc);
+				t = t0+disc;
+				t2 = t0-disc;
+				if(t > 0.5){ tdist = fabs(t-1.); }else{ tdist = fabs(t); }
+				if(t2 > 0.5){ t2dist = fabs(t2-1.); }else{ t2dist = fabs(t2); }
+				if(t2dist < tdist){ t = t2; }
+				if(t < 0){ t = 0; }
+				if(t > 1){ t = 1; }
+				xp[2*2*i+0] = vert_org[2*i+0] + t*seg[2*i+0];
+				xp[2*2*i+1] = vert_org[2*i+1] + t*seg[2*i+1];
+			}else{
+				// possibly 0 or 2 intersection points; we count 1 degenerate point as none
+				if(disc <= 0){
+					nxp[i] = 0;
+				}else{
+					disc = sqrt(disc);
+					nxp[i] = 0;
+					t = t0-disc;
+					t2 = t0+disc;
+					if(0 < t && t < 1 && 0 < t2 && t2 < 1){
+						xp[2*(2*i+0)+0] = vert_org[2*i+0] + t*seg[2*i+0];
+						xp[2*(2*i+0)+1] = vert_org[2*i+1] + t*seg[2*i+1];
+						xp[2*(2*i+1)+0] = vert_org[2*i+0] + t*seg[2*i+0];
+						xp[2*(2*i+1)+1] = vert_org[2*i+1] + t*seg[2*i+1];
+						nxp[i] += 2;
+						nx += 2;
+					}
+				}
+			}
+		}
+	}
+/*	
+	printf("tri: (%f,%f) (%f,%f) (%f,%f)\n",
+		vert[0], vert[1], vert[2], vert[3], vert[4], vert[5]);
+	printf("inside = %d, nx = %d\n", inside, nx);
+	printf("xp:");
+	for(i = 0; i < 3; ++i){
+		for(j = 0; j < nxp[i]; ++j){
+			printf(" (%d,%d,{%f,%f})", i, j, tri_org[0]+xp[2*(2*i+j)+0], tri_org[1]+xp[2*(2*i+j)+1]);
+		}
+	}printf("\n");
+*/
+	if(0 == nx){ // either no intersection area, or triangle entirely in circle, or circle in triangle
+		if((inside & 0x7) == 0x7){ // all triangle points in circle
+			// we already dealt with this above; getting here would be an error.
+			return -1;
+		}else{ // either no intersection area, or circle in triangle
+			if(inside & 0x8){ // triangle contains circle center, intersection area is either circle area or triangle area
+				return M_PI;
+			}else{
+				return 0;
+			}
+		}
+	}else if(2 == nx){
+		// Either the 2 intersections are a single side or on two different sides
+		if(nxp[0] < 2 && nxp[1] < 2 && nxp[2] < 2){ // on different sides
+			// The area is determined by tracing
+		}else{
+			for(i = 0; i < 3; ++i){
+				if(nxp[i] > 1){ break; }
+			}
+			// Either the circle is mostly inside with a wedge poking out a side
+			// or the circle is mostly outside with a wedge poking inside
+			const double diff[2] = {
+				xp[2*(2*i+1)+0]-xp[2*2*i+0],
+				xp[2*(2*i+1)+1]-xp[2*2*i+1]
+			};
+			double sector_area = circular_sector_area(geom_norm2d(diff));
+			if(inside & (1 << 3)){
+				// Area of circle minus a wedge
+				return M_PI - sector_area;
+			}else{
+				return sector_area;
+			}
+		}
+	}else if(4 == nx){
+		// The area is determined by tracing
+	}else if(6 == nx){
+		// The area is determined by tracing
+	}else{
+		// There is no way we can get here
+		return -1;
+	}
+	
+	// At this point we expect to just trace out the intersection shape
+	// The vertices of the intersection shape is either a triangle vertex
+	// or a intersection point on a triangle edge.
+	int vtype[6]; // 1 = triangle vertex, 0 = intersection point
+	double vp[12];
+	int nv = 0; // number of actual vertices
+	
+	for(i = 0; i < 3; ++i){
+		if(inside & (1 << i)){
+			vp[2*nv+0] = vert_org[2*i+0];
+			vp[2*nv+1] = vert_org[2*i+1];
+			vtype[nv++] = 1;
+		}
+		for(j = 0; j < nxp[i]; ++j){
+			vp[2*nv+0] = xp[2*(2*i+j)+0];
+			vp[2*nv+1] = xp[2*(2*i+j)+1];
+			vtype[nv++] = 0;
+		}
+	}
+
+	if(nv < 3){ // this should not be possible
+		return -1;
+	}
+	
+	// All neighboring points in v which are intersection points should have circular caps added
+	double area = geom_polygon_area2d(nv, vp);
+	for(i = 0; i < nv; ++i){
+		int im1 = i-1; if(im1 < 0){ im1 = nv-1; }
+		if((0 == vtype[im1]) && (0 == vtype[i])){
+			const double diff[2] = {
+				vp[2*i+0]-vp[2*im1+0],
+				vp[2*i+1]-vp[2*im1+1]
+			};
+			area += circular_sector_area(geom_norm2d(diff));
+		}
+	}
+	return area;
+}
+
+double geom_shape2d_simplex_overlap_exact(const geom_shape2d *s, const double torg[2], const double t[6]){
+	const double org[2] = { torg[0]-s->org[0], torg[1]-s->org[1] };
+	const double areaT = (t[2]-t[0]) * (t[5]-t[1]) - (t[4]-t[0]) * (t[3]-t[1]);
+	switch(s->type){
+	case GEOM_SHAPE2D_ELLIPSE:
+		{
+			// The B matrix of the ellipse transforms space so that the ellipse is a unit circle
+			// We apply the B transform to the triangle, compute the area, then divide by the
+			// determinant of B.
+			const double *B = &s->s.ellipse.B[0];
+			const double detB = B[0]*B[3] - B[1]*B[2];
+			double areaI;
+			if(0 == detB || 0 == areaT){ return 0; }
+			double tri_u[2] = {
+				B[0]*(t[2]-t[0]) + B[2]*(t[3]-t[1]),
+				B[1]*(t[2]-t[0]) + B[3]*(t[3]-t[1])
+			};
+			double tri_v[2] = {
+				B[0]*(t[4]-t[0]) + B[2]*(t[5]-t[1]),
+				B[1]*(t[4]-t[0]) + B[3]*(t[5]-t[1])
+			};
+			areaI = circle_triangle_overlap(org, tri_u, tri_v) / detB;
+			if(areaI > areaT){ areaI = areaT; }
+			return areaI;
+		}
+	case GEOM_SHAPE2D_POLYGON:
+		{
+			double areaI = 0;
+			double P[6], Q[6], Pi[14];
+			unsigned int i, j, nPi;
+			unsigned int *tri = (unsigned int*)malloc(sizeof(unsigned int)*3*(s->s.polygon.nv-2));
+			
+			const double u[2] = { t[2]-t[0], t[3]-t[1] };
+			const double v[2] = { t[4]-t[0], t[5]-t[1] };
+			P[2*0+0] = org[0];
+			P[2*0+1] = org[1];
+			P[2*1+0] = P[2*0+0] + u[0];
+			P[2*1+1] = P[2*0+1] + u[1];
+			P[2*2+0] = P[2*1+0] + v[0];
+			P[2*2+1] = P[2*1+1] + v[1];
+			
+			geom_polygon_triangulate2d(s->s.polygon.nv, s->s.polygon.v, tri);
+			/*
+			for(i = 0; i < s->vtab.polygon.n_vertices-2; ++i){
+				fprintf(stderr, " (%d %d %d)", tri[3*i+0], tri[3*i+1], tri[3*i+2]);
+			}fprintf(stderr, "\n");
+			*/
+			for(i = 0; i < s->s.polygon.nv-2; ++i){
+				for(j = 0; j < 3; ++j){
+					Q[2*j+0] = s->s.polygon.v[2*tri[3*i+j]+0];
+					Q[2*j+1] = s->s.polygon.v[2*tri[3*i+j]+1];
+				}
+				nPi = 6;
+				geom_convex_polygon_intersection2d(3,P,3,Q,&nPi,Pi);
+				areaI += geom_polygon_area2d(nPi,Pi);
+			}
+			if(areaI > areaT){ areaI = areaT; }
+			free(tri);
+			return areaI;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 int geom_shape2d_intersects_simplex(const geom_shape2d *s, const double torg[2], const double t[6]){
 	const double org[2] = { torg[0]-s->org[0], torg[1]-s->org[1] };
 	double to[6] = {

@@ -175,6 +175,9 @@ int geom_aabb2d_intersects(const geom_aabb2d *a, const geom_aabb2d *b);
 int geom_shape3d_init(geom_shape3d *s);
 int geom_shape2d_init(geom_shape2d *s);
 
+geom_shape3d *geom_shape3d_clone(geom_shape3d *s);
+geom_shape2d *geom_shape2d_clone(geom_shape2d *s);
+
 // Determines if p lies within the shape. Returns 0 if no, 1 if yes.
 int geom_shape3d_contains(const geom_shape3d *s, const double p[3]);
 int geom_shape2d_contains(const geom_shape2d *s, const double p[2]);
@@ -191,10 +194,15 @@ int geom_shape3d_normal(const geom_shape3d *s, const double p[3], double n[3]);
 int geom_shape2d_normal(const geom_shape2d *s, const double p[2], double n[2]);
 
 // Computes the approximate overlapping volume/area between a shape and
-// the given simplex using O(n^d) samples. The returned value is the
-// fraction of sample points inside the simplex.
-double geom_shape3d_approx_simplex_overlap(const geom_shape3d *s, const double torg[3], const double t[12], unsigned int n);
-double geom_shape2d_approx_simplex_overlap(const geom_shape2d *s, const double torg[2], const double t[6], unsigned int n);
+// the given simplex using O(n^d) stratified samples. The returned value
+// is the fraction of sample points inside the simplex.
+double geom_shape3d_simplex_overlap_stratified(const geom_shape3d *s, const double torg[3], const double t[12], unsigned int n);
+double geom_shape2d_simplex_overlap_stratified(const geom_shape2d *s, const double torg[2], const double t[6], unsigned int n);
+
+// Computes the exact overlapping area between a shape and the given
+// simplex. The returned value is the actual area of overlap.
+double geom_shape2d_simplex_overlap_exact(const geom_shape2d *s, const double torg[2], const double t[6]);
+
 /*
 // Determines whether or not the shape intersects a simplex.
 // Assumes the simplex is positively oriented.

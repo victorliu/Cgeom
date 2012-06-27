@@ -1,5 +1,5 @@
-#include <geom_shapeset.h>
-#include <geom_bvh.h>
+#include <Cgeom/geom_shapeset.h>
+#include <Cgeom/geom_bvh.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,7 +18,7 @@
 typedef struct geom_shape2d_info_struct{
 	geom_shape2d *s;
 	geom_aabb2d box;
-	int unbounded;
+	unsigned int flags;
 } geom_shape2d_info;
 
 struct geom_shapeset2d_struct{
@@ -33,7 +33,7 @@ struct geom_shapeset2d_struct{
 	double lattice[4];
 };
 
-geom_shapeset2d geom_shapeset2d_new(const double lattice[4]){
+geom_shapeset2d geom_shapeset2d_new(){
 	geom_shapeset2d ss = (geom_shapeset2d)malloc(sizeof(struct geom_shapeset2d_struct));
 	ss->n = 0;
 	ss->n_alloc = 0;
@@ -41,13 +41,6 @@ geom_shapeset2d geom_shapeset2d_new(const double lattice[4]){
 	ss->bvh = NULL;
 	ss->use_bvh = 0;
 	ss->periodic = 0;
-	if(NULL != lattice){
-		ss->periodic = 1;
-		ss->lattice[0] = lattice[0];
-		ss->lattice[1] = lattice[1];
-		ss->lattice[2] = lattice[2];
-		ss->lattice[3] = lattice[3];
-	}
 	return ss;
 }
 
@@ -58,6 +51,20 @@ void geom_shapeset2d_destroy(geom_shapeset2d ss){
 	}
 	free(ss->info);
 	free(ss);
+}
+
+int geom_shapeset2d_set_lattice(geom_shapeset2d ss, const double lattice[4]){
+	if(NULL == ss){ return -1; }
+	if(NULL == lattice){
+		ss->periodic = 0;
+	}else{
+		ss->periodic = 1;
+		ss->lattice[0] = lattice[0];
+		ss->lattice[1] = lattice[1];
+		ss->lattice[2] = lattice[2];
+		ss->lattice[3] = lattice[3];
+	}
+	return 0;
 }
 
 struct shape2d_iter_data{
@@ -91,7 +98,8 @@ int geom_shapeset2d_add(geom_shapeset2d ss, geom_shape2d *s){
 	}
 	i = ss->n;
 	ss->info[i].s = s;
-	ss->info[i].unbounded = geom_shape2d_get_aabb(s, &(ss->info[i].box));
+	ss->info[i].flags = 0;
+	ss->info[i].flags |= geom_shape2d_get_aabb(s, &(ss->info[i].box)) ? GEOM_SHAPESET2D_FLAG_UNBOUNDED : 0;
 	ss->n++;
 	
 	if(ss->use_bvh){
@@ -119,6 +127,13 @@ geom_shape2d* geom_shapeset2d_index(geom_shapeset2d ss, int index){
 	if(NULL == ss){ return NULL; }
 	if(index < 0 || index >= ss->n){ return NULL; }
 	return ss->info[index].s;
+}
+int geom_shapeset2d_index_aabb(geom_shapeset2d ss, int index, geom_aabb2d *box){
+	if(NULL == ss){ return -1; }
+	if(index < 0 || index >= ss->n){ return -2; }
+	if(NULL == box){ return -3; }
+	memcpy(box, &ss->info[index].box, sizeof(geom_aabb2d));
+	return ss->info[index].flags;
 }
 
 struct query_pt2d_data{
@@ -159,15 +174,23 @@ int geom_shapeset2d_query_pt(geom_shapeset2d ss, const double p[2]){
 	d.info = ss->info;
 	d.ibest = -1;
 	for(c = 0; c < clim; ++c){
-		d.pc[0] = p[0] + (double)off[2*c+0] * ss->lattice[0] + (double)off[2*c+1] * ss->lattice[2];
-		d.pc[1] = p[1] + (double)off[2*c+0] * ss->lattice[1] + (double)off[2*c+1] * ss->lattice[3];
+		d.pc[0] = p[0];
+		d.pc[1] = p[1];
+		if(0 != off[2*c+0]){
+			d.pc[0] += (double)off[2*c+0] * ss->lattice[0];
+			d.pc[1] += (double)off[2*c+0] * ss->lattice[1];
+		}
+		if(0 != off[2*c+1]){
+			d.pc[0] += (double)off[2*c+1] * ss->lattice[2];
+			d.pc[1] += (double)off[2*c+1] * ss->lattice[3];
+		}
 		if(ss->use_bvh){
 			geom_bvh2d_query_pt(ss->bvh, d.pc, &query_pt2d, &d);
 		}else{
 			int i;
 			for(i = 0; i < ss->n; ++i){
 				if(i <= d.ibest){ continue; } // skip anything less the current best
-				if(ss->info[i].unbounded){
+				if(GEOM_SHAPESET2D_FLAG_UNBOUNDED & ss->info[i].flags){
 					if(geom_shape2d_contains(ss->info[i].s, d.pc)){
 						d.ibest = i;
 					}
@@ -182,6 +205,19 @@ int geom_shapeset2d_query_pt(geom_shapeset2d ss, const double p[2]){
 		}
 	}
 	return d.ibest;
+}
+int geom_shapeset2d_foreach(
+	geom_shapeset2d ss,
+	int (*func)(geom_shape2d *s, const geom_aabb2d *box, unsigned int flags, void *data),
+	void *data
+){
+	if(NULL == ss){ return -1; }
+	if(NULL == func){ return -2; }
+	unsigned int i;
+	for(i = 0; i < ss->n; ++i){
+		if(!func(ss->info[i].s, &ss->info[i].box, ss->info[i].flags, data)){ break; }
+	}
+	return i;
 }
 
 
@@ -211,7 +247,7 @@ int geom_shapeset2d_query_pt(geom_shapeset2d ss, const double p[2]){
 typedef struct geom_shape3d_info_struct{
 	geom_shape3d *s;
 	geom_aabb3d box;
-	int unbounded;
+	unsigned int flags;
 } geom_shape3d_info;
 
 struct geom_shapeset3d_struct{
@@ -226,7 +262,7 @@ struct geom_shapeset3d_struct{
 	double lattice[9];
 };
 
-geom_shapeset3d geom_shapeset3d_new(const double lattice[9]){
+geom_shapeset3d geom_shapeset3d_new(){
 	geom_shapeset3d ss = (geom_shapeset3d)malloc(sizeof(struct geom_shapeset3d_struct));
 	ss->n = 0;
 	ss->n_alloc = 0;
@@ -234,7 +270,23 @@ geom_shapeset3d geom_shapeset3d_new(const double lattice[9]){
 	ss->bvh = NULL;
 	ss->use_bvh = 0;
 	ss->periodic = 0;
-	if(NULL != lattice){
+	return ss;
+}
+
+void geom_shapeset3d_destroy(geom_shapeset3d ss){
+	if(NULL == ss){ return; }
+	if(ss->use_bvh){
+		geom_bvh3d_destroy(ss->bvh);
+	}
+	free(ss->info);
+	free(ss);
+}
+
+int geom_shapeset3d_set_lattice(geom_shapeset3d ss, const double lattice[9]){
+	if(NULL == ss){ return -1; }
+	if(NULL == lattice){
+		ss->periodic = 0;
+	}else{
 		ss->periodic = 1;
 		ss->lattice[0] = lattice[0];
 		ss->lattice[1] = lattice[1];
@@ -246,16 +298,7 @@ geom_shapeset3d geom_shapeset3d_new(const double lattice[9]){
 		ss->lattice[7] = lattice[7];
 		ss->lattice[8] = lattice[8];
 	}
-	return ss;
-}
-
-void geom_shapeset3d_destroy(geom_shapeset3d ss){
-	if(NULL == ss){ return; }
-	if(ss->use_bvh){
-		geom_bvh3d_destroy(ss->bvh);
-	}
-	free(ss->info);
-	free(ss);
+	return 0;
 }
 
 struct shape3d_iter_data{
@@ -291,7 +334,8 @@ int geom_shapeset3d_add(geom_shapeset3d ss, geom_shape3d *s){
 	}
 	i = ss->n;
 	ss->info[i].s = s;
-	ss->info[i].unbounded = geom_shape3d_get_aabb(s, &(ss->info[i].box));
+	ss->info[i].flags = 0;
+	ss->info[i].flags |= geom_shape3d_get_aabb(s, &(ss->info[i].box)) ? GEOM_SHAPESET3D_FLAG_UNBOUNDED : 0;
 	ss->n++;
 	
 	if(ss->use_bvh){
@@ -319,6 +363,13 @@ geom_shape3d* geom_shapeset3d_index(geom_shapeset3d ss, int index){
 	if(NULL == ss){ return NULL; }
 	if(index < 0 || index >= ss->n){ return NULL; }
 	return ss->info[index].s;
+}
+int geom_shapeset3d_index_aabb(geom_shapeset3d ss, int index, geom_aabb3d *box){
+	if(NULL == ss){ return -1; }
+	if(index < 0 || index >= ss->n){ return -2; }
+	if(NULL == box){ return -3; }
+	memcpy(box, &ss->info[index].box, sizeof(geom_aabb3d));
+	return ss->info[index].flags;
 }
 
 
@@ -385,7 +436,7 @@ int geom_shapeset3d_query_pt(geom_shapeset3d ss, const double p[3]){
 			int i;
 			for(i = 0; i < ss->n; ++i){
 				if(i <= ibest){ continue; } // skip anything less the current best
-				if(ss->info[i].unbounded){
+				if(GEOM_SHAPESET3D_FLAG_UNBOUNDED & ss->info[i].flags){
 					if(geom_shape3d_contains(ss->info[i].s, pc)){
 						ibest = i;
 					}
@@ -400,4 +451,17 @@ int geom_shapeset3d_query_pt(geom_shapeset3d ss, const double p[3]){
 		}
 	}
 	return 0;
+}
+int geom_shapeset3d_foreach(
+	geom_shapeset3d ss,
+	int (*func)(geom_shape3d *s, const geom_aabb3d *box, unsigned int flags, void *data),
+	void *data
+){
+	if(NULL == ss){ return -1; }
+	if(NULL == func){ return -2; }
+	unsigned int i;
+	for(i = 0; i < ss->n; ++i){
+		if(!func(ss->info[i].s, &ss->info[i].box, ss->info[i].flags, data)){ break; }
+	}
+	return i;
 }

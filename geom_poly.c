@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
-#include <geom_la.h>
+#include <Cgeom/geom_la.h>
+#include <Cgeom/geom_predicates.h>
 #include <float.h>
 
 float  geom_polygon_area2f(unsigned int n, const float  *v){
@@ -708,4 +709,289 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 		free(workalloc);
 	}
 	return !converged;
+}
+
+static int triangle_contains(
+	const double org[2], // triangle vertices are {org,org+u,org+v}, in CCW orientation
+	const double u[2],
+	const double v[2],
+	const double p[2] // query point
+){
+	if(geom_orient2d(org,u,p) >= 0){
+		if(geom_orient2d(org,v,p) <= 0){
+			// treat org as origin, we have points u and v, just need p-org
+			double x[2] = {p[0] - org[0], p[1] - org[1]};
+			if(geom_orient2d(u,v,x) >= 0){
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+// An n-sided polygon always has n-2 triangles in its triangulation.
+int geom_polygon_triangulate2d(
+	unsigned int n, const double *v, // the polygon
+	unsigned int *t // length 3*(n-2), stores the triangle as triples of vertex indices into v
+){
+	// t is used to store a working copy of the currently clipped polygon vertex index, size 3 <= m <= n.
+	// t must also store the resulting triangles, size 3*(n-m).
+	// The total size of these two is 3*n-2*m, which must be <= 3*(n-2). This is true for m >= 3.
+	// Therefore, we keep the working copy at the very end of t, and add triangles to the beginning.
+	unsigned int *V; // pointer to start of working copy
+	unsigned int nv; // size of V
+	unsigned int i;
+	int count;
+	int tc = 0; // number of triangles currently in t
+	
+	if(n < 3){ return -1; }
+	if(NULL == v){ return -2; }
+	if(NULL == t){ return -3; }
+
+	// Make a copy of all the vertices
+	V = t + 2*n-6;
+	nv = n;
+	for(i = 0; i < n; ++i){ V[i] = i; }
+	
+	count = 2*nv;
+	for(i = nv-1; nv > 2; ){
+		/*
+		fprintf(stderr, "V:");
+		for(j = 0; j < nv; ++j){
+			fprintf(stderr, " %d", V[j]);
+		}fprintf(stderr, "\n");
+		fprintf(stderr, "count = %d\n", count);
+		*/
+		int u, w;
+		if(0 >= (count--)){ return 1; } // bad polygon
+		// get 3 consecutive vertices
+		u = i; //if(nv <= u){ u = 0; } // prev
+		i = u+1; if(nv <= i){ i = 0; } // mid
+		w = i+1; if(nv <= w){ w = 0; } // next
+
+		// Can clip the ear?
+		int can_clip = 1;
+		{
+			int p;
+			double tri_a[2] = {v[2*V[i]+0] - v[2*V[u]+0], v[2*V[i]+1] - v[2*V[u]+1]};
+			double tri_b[2] = {v[2*V[w]+0] - v[2*V[u]+0], v[2*V[w]+1] - v[2*V[u]+1]};
+			if(geom_orient2d(&v[2*V[u]], &v[2*V[i]], &v[2*V[w]]) < 0){
+				can_clip = 0;
+			}else{
+				// if the u-i-w triangle contains any other vertex, can't clip.
+				for(p = 0; p < nv; ++p){
+					if((p == u) || (p == i) || (p == w)){ continue; }
+					if(triangle_contains(&v[2*V[u]],tri_a,tri_b, &v[2*V[p]])){ can_clip = 0; break; }
+				}
+			}
+		}
+
+		// Clip off the ear
+		if(can_clip){
+			unsigned int tri[3] = {V[u], V[i], V[w]};
+			// erase vertex i
+			while(i > 0){
+				V[i] = V[i-1];
+				--i;
+			}
+			++V; --nv; count = 2*nv;
+			// Add the new triangle
+			t[3*tc+0] = tri[0];
+			t[3*tc+1] = tri[1];
+			t[3*tc+2] = tri[2];
+			++tc;
+		}
+	}
+	return 0;
+}
+
+static int dsign(double x){
+	if(0 == x){ return 0; }
+	else if(x > 0){ return 1; }
+	else{ return -1; }
+}
+static int segments_intersect(const double a[2], const double b[2], const double c[2], const double d[2], double *x, double *t){
+	double c0, c1, c2, c3;
+	c0 = geom_orient2d(a,b,c);
+	c1 = geom_orient2d(a,b,d);
+	if(0 == c0 && 0 == c1){ return 0; } // collinear -> no intersection
+	if(dsign(c0) != dsign(c1)){
+		c2 = geom_orient2d(c, d, a);
+		c3 = geom_orient2d(c, d, b);
+		if(dsign(c2) != dsign(c3)){
+			if(NULL != x){
+				double r;
+				c1 = c0-c1; c3 = c2-c3;
+				if(fabs(c1) > fabs(c3)){
+					r = c0/c1;
+					x[0] = c[0] + r*(d[0]-c[0]);
+					x[1] = c[1] + r*(d[1]-c[1]);
+				}else{
+					r = c2/c3;
+					x[0] = a[0] + r*(b[0]-a[0]);
+					x[1] = a[1] + r*(b[1]-a[1]);
+				}
+				if(NULL != t){ *t = r; }
+			}
+			return 1;
+		}else{ return 0; }
+	}else{ return 0; }
+}
+int geom_convex_polygon_intersection2d(
+	unsigned int n, // n >= 3
+	const double *P,
+	unsigned int m, // m >= 3
+	const double *Q,
+	unsigned int *ni, // on input, size of Pi, on output, numer of points in Pi
+	double *Pi // output intersection polygon
+){
+	int i, j;
+	if(n < 3){ return -1; }
+	if(NULL == P){ return -2; }
+	if(m < 3){ return -3; }
+	if(NULL == Q){ return -4; }
+	if(NULL == ni){ return -5; }
+	if(NULL == Pi){ return -6; }
+
+	// Implementation of:
+	// "A new linear algorithm for intersecting convex polygons"
+	// Joseph O'Rourke, Chi-Bin Chien, Thomas Olson, and David Naddor
+	// Computer Graphics and Image Processing 19, pp. 384-391 (1982)
+	
+	const unsigned int nPi = *ni; *ni = 0;
+	
+	int ip = 1, iq = 1;
+	int ipp = 0, iqp = 0; // prev of ip and iq
+	char inside = ' ';
+	// record first intersection
+	int first_xsected = 0;
+	int ipf = n, iqf = m;
+	int first_iter = 0;
+	
+	int Pi_full = 0;
+	int iter;
+
+	// First, a bounding box check
+	{
+		int iP_x_min = 0, iP_x_max = 0, iP_y_min = 0, iP_y_max = 0;
+		int iQ_x_min = 0, iQ_x_max = 0, iQ_y_min = 0, iQ_y_max = 0;
+		for(i = 1; i < n; ++i){
+			if(P[2*i+0] < P[2*iP_x_min+0]){ iP_x_min = i; }
+			if(P[2*i+1] < P[2*iP_y_min+1]){ iP_y_min = i; }
+			if(P[2*i+0] > P[2*iP_x_max+0]){ iP_x_max = i; }
+			if(P[2*i+1] > P[2*iP_y_max+1]){ iP_y_max = i; }
+		}
+		for(i = 1; i < m; ++i){
+			if(Q[2*i+0] < Q[2*iQ_x_min+0]){ iQ_x_min = i; }
+			if(Q[2*i+1] < Q[2*iQ_y_min+1]){ iQ_y_min = i; }
+			if(Q[2*i+0] > Q[2*iQ_x_max+0]){ iQ_x_max = i; }
+			if(Q[2*i+1] > Q[2*iQ_y_max+1]){ iQ_y_max = i; }
+		}
+		if(
+			( Q[2*iQ_x_min+0] > P[2*iP_x_max+0] ) ||
+			( P[2*iP_x_min+0] > Q[2*iQ_x_max+0] ) ||
+			( Q[2*iQ_y_min+1] > P[2*iP_y_max+1] ) ||
+			( P[2*iP_y_min+1] > Q[2*iQ_y_max+1] )
+		){ return 0; }
+	}
+
+	for(iter = 0; iter <= 2*(m+n); ++iter){
+//fprintf(stderr, "iter %d, ip = %d, iq = %d, inside = %c\n", iter, ip, iq, inside);
+		double xp[2];
+		if(segments_intersect(&P[2*ipp],&P[2*ip],&Q[2*iqp],&Q[2*iq],xp, NULL)){
+//fprintf(stderr, " xsect! %f,%f %f,%f %f,%f %f,%f\n", P[2*ipp+0],P[2*ipp+1],P[2*ip+0],P[2*ip+1],Q[2*iqp+0],Q[2*iqp+1],Q[2*iq+0],Q[2*iq+1]);
+			if(first_xsected && first_iter != iter-1){ // if the first intersection was NOT found during the previous iteration
+				if(ip == ipf && iq == iqf){ break; } // if this intersection is the same as the first intersection
+			}
+			if(*ni >= nPi){ Pi_full = 1; }
+			if(!Pi_full){ Pi[2*(*ni)+0] = xp[0]; Pi[2*(*ni)+1] = xp[1]; (*ni)++; }
+//fprintf(stderr, "  Adding %f,%f\n", Pi[2*((*ni)-1)+0], Pi[2*((*ni)-1)+1]);
+			if(geom_orient2d(&Q[2*iqp],&Q[2*iq],&P[2*ip]) >= 0){
+				inside = 'P';
+			}else{ inside = 'Q'; }
+			
+			if(!first_xsected){
+				first_xsected = 1;
+				ipf = ip; iqf = iq;
+				first_iter = iter;
+			}
+		}
+		xp[0] = P[2*ip+0] + (Q[2*iq+0] - P[2*ipp+0]);
+		xp[1] = P[2*ip+1] + (Q[2*iq+1] - P[2*ipp+1]);
+		if(geom_orient2d(&Q[2*iqp],&Q[2*iq],xp)/*Cross(Q[2*iq]-Q[2*iqp],P[2*ip]-P[2*ipp])*/ >= 0){
+			if(geom_orient2d(&Q[2*iqp],&Q[2*iq],&P[2*ip]) >= 0){ // advance Q
+				if(inside == 'Q'){
+					if(*ni >= nPi){ Pi_full = 1; }
+					if(!Pi_full){ Pi[2*(*ni)+0] = Q[2*iq+0]; Pi[2*(*ni)+1] = Q[2*iq+1]; (*ni)++; }
+				}
+				iqp = iq;
+				iq = (iq+1)%m;
+			}else{ // advance P
+				if(inside == 'P'){
+					if(*ni >= nPi){ Pi_full = 1; }
+					if(!Pi_full){ Pi[2*(*ni)+0] = P[2*ip+0]; Pi[2*(*ni)+1] = P[2*ip+1]; (*ni)++; }
+				}
+				ipp = ip;
+				ip = (ip+1)%n;
+			}
+		}else{
+			if(geom_orient2d(&P[2*ipp],&P[2*ip],&Q[2*iq]) >= 0){ // advance P
+				if(inside == 'P'){
+					if(*ni >= nPi){ Pi_full = 1; }
+					if(!Pi_full){ Pi[2*(*ni)+0] = P[2*ip+0]; Pi[2*(*ni)+1] = P[2*ip+1]; (*ni)++; }
+				}
+				ipp = ip;
+				ip = (ip+1)%n;
+			}else{ // advance Q
+				if(inside == 'Q'){
+					if(*ni >= nPi){ Pi_full = 1; }
+					if(!Pi_full){ Pi[2*(*ni)+0] = Q[2*iq+0]; Pi[2*(*ni)+1] = Q[2*iq+1]; (*ni)++; }
+				}
+				iqp = iq;
+				iq = (iq+1)%m;
+			}
+		}
+	}
+	// At this point, either P in Q, Q in P, or they don't intersect
+	if(*ni == 0){
+		int flag = 1;
+		for(j = 0; j < n; ++j){ // really we only need to check j == 0, but due to degeneracy, it is safest to check all
+			for(i = 0; i < m; ++i){
+				if(geom_orient2d(&Q[2*i],&Q[2*((i+1)%m)], &P[2*j]) < 0){
+					flag = 0; j = n+1; break;
+				}
+			}
+		}
+		if(flag){ // P in Q
+			if(*ni+n >= nPi){ Pi_full = 1; }
+			if(!Pi_full){
+				for(i = 0; i < n; ++i){
+					Pi[2*(*ni)+0] = P[2*i+0]; Pi[2*(*ni)+1] = P[2*i+1]; (*ni)++;
+				}
+				return 1;
+			}
+		}else{
+			flag = 1;
+			for(j = 0; j < m; ++j){ // really we only need to check j == 0, but due to degeneracy, it is safest to check all
+				for(i = 0; i < n; ++i){
+					if(geom_orient2d(&P[2*i],&P[2*((i+1)%n)],&Q[2*j]) < 0){
+						flag = 0; j = m+1; break;
+					}
+				}
+			}
+			if(flag){ // Q in P
+				if(*ni+m >= nPi){ Pi_full = 1; }
+				if(!Pi_full){
+					for(i = 0; i < m; ++i){
+						Pi[2*(*ni)+0] = Q[2*i+0]; Pi[2*(*ni)+1] = Q[2*i+1]; (*ni)++;
+					}
+					return 2;
+				}
+			}
+		}
+	}
+	if(Pi_full){
+		return -10;
+	}else{
+		return 0;
+	}
 }
