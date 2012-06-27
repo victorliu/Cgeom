@@ -338,8 +338,15 @@ int main(){
 	printf("(Randomly generated matrices may be nearly singular.)\n");
 	
 	printf("Checking matsvd\n");
-	for(i = 0; i < 1; ++i){
-		geom_randd(4, d1);
+	for(i = 0; i < 2; ++i){
+		if(0 == i){
+			d1[0] = 1;
+			d1[1] = 0;
+			d1[2] = 0;
+			d1[3] = 1;
+		}else{
+			geom_randd(4, d1);
+		}
 		geom_matsvd2d(d1, &d2[0], d3, &d2[4]);
 		// Check for orthogonality
 		checkd_small("geom_matsvd2d orth u check1", dd*(d2[0]*d2[0] + d2[1]*d2[1] - 1.));
