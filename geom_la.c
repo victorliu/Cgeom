@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
@@ -566,14 +567,23 @@ void geom_matsvd2d(const double m[4], double u[4], double s[2], double vt[4]){
 	};
 	double sum = 0.5*(a + c);
 	double rt = geom_norm2d(b);
-	s[0] = sqrt(sum + rt);
-	s[1] = sqrt(sum - rt);
-	vt[0] = b[1] + rt;
-	vt[1] = b[0];
-	vt[2] = b[1] - rt;
-	vt[3] = b[0];
-	geom_normalize2d(&vt[0]);
-	geom_normalize2d(&vt[2]);
+	if(0 == rt){
+		s[0] = sqrt(sum);
+		s[1] = s[0];
+		vt[0] = 1;
+		vt[1] = 0;
+		vt[2] = 0;
+		vt[3] = 1;
+	}else{
+		s[0] = sqrt(sum + rt);
+		s[1] = sqrt(sum - rt);
+		vt[0] = b[1] + rt;
+		vt[1] = b[0];
+		vt[2] = b[1] - rt;
+		vt[3] = b[0];
+		geom_normalize2d(&vt[0]);
+		geom_normalize2d(&vt[2]);
+	}
 	a = vt[1]; vt[1] = vt[2]; vt[2] = a;
 	// Now we need eigenvectors of m.Transpose[m]
 	a = m[0]*m[0] + m[2]*m[2];
@@ -581,12 +591,19 @@ void geom_matsvd2d(const double m[4], double u[4], double s[2], double vt[4]){
 	b[0] = m[0]*m[1] + m[2]*m[3];
 	b[1] = 0.5*(a - c);
 	rt = geom_norm2d(b);
-	u[0] = b[1] + rt;
-	u[1] = b[0];
-	u[2] = b[1] - rt;
-	u[3] = b[0];
-	geom_normalize2d(&u[0]);
-	geom_normalize2d(&u[2]);
+	if(0 == rt){
+		u[0] = 1;
+		u[1] = 0;
+		u[2] = 0;
+		u[3] = 1;
+	}else{
+		u[0] = b[1] + rt;
+		u[1] = b[0];
+		u[2] = b[1] - rt;
+		u[3] = b[0];
+		geom_normalize2d(&u[0]);
+		geom_normalize2d(&u[2]);
+	}
 }
 
 int geom_quadraticd(
