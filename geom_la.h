@@ -37,6 +37,10 @@ double geom_dot3d(const double a[3], const double b[3]);
 float  geom_dot4f(const float  a[4], const float  b[4]);
 double geom_dot4d(const double a[4], const double b[4]);
 
+// Scalar cross product in 2D
+float  geom_cross2f(const float  a[2], const float  b[2]);
+double geom_cross2d(const double a[2], const double b[2]);
+
 // Cross product in 3D
 void geom_cross3f(const float  a[3], const float  b[3], float  result[3]);
 void geom_cross3d(const double a[3], const double b[3], double result[3]);

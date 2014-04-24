@@ -102,4 +102,17 @@ void geom_circum_tri3d(
 	double *eta
 );
 
+/* Computes the best fit circle (in some least-squares sense)
+ * to a set of points. Note that the input buffer is destroyed
+ * on output.
+ * The center and radius are computed, and the returned value
+ * gives an estimate for the quality of the fit in terms of
+ * average radius discrepancy.
+ */
+double geom_circum_fit2d(
+	int n,
+	const double *p, /* length 2*n of (x,y) pairs */
+	double c[2], double *r
+);
+
 #endif // GEOM_CIRCUM_H_INCLUDED

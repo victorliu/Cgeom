@@ -35,7 +35,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 */
 
-// Returns 1 if inside, 0 otherwise
+/* Returns 1 if inside, 0 otherwise */
 int geom_polygon_inside2f(unsigned int nv, const float  *v, const float  p[2]){
 	unsigned int i, j;
 	int c = 0;
@@ -63,14 +63,14 @@ int geom_polygon_inside2d(unsigned int nv, const double *v, const double p[2]){
 	return c;
 }
 
-// Returns a normal vector for a point on (near) the polygon's boundary
+/* Returns a normal vector for a point on (near) the polygon's boundary */
 void geom_polygon_normal2f(unsigned int nv, const float  *v, const float  p[2], float  n[2]){
 	unsigned int i, j;
 	float mindist = FLT_MAX;
 	unsigned int idist = -1;
 	n[0] = 0.f; n[1] = 0.f;
 	for(j = 0, i = nv-1; j < nv; i = j++){
-		// compute distance from r to segment
+		/* compute distance from r to segment */
 		float u[2] = {
 			v[2*j+0] - v[2*i+0],
 			v[2*j+1] - v[2*i+1]
@@ -115,7 +115,7 @@ void geom_polygon_normal2d(unsigned int nv, const double *v, const double p[2], 
 	unsigned int idist = -1;
 	n[0] = 0.0; n[1] = 0.0;
 	for(j = 0, i = nv-1; j < nv; i = j++){
-		// compute distance from r to segment
+		/* compute distance from r to segment */
 		double u[2] = {
 			v[2*j+0] - v[2*i+0],
 			v[2*j+1] - v[2*i+1]
@@ -245,33 +245,33 @@ void geom_convex_normal3d(unsigned int np, const double *p, const double r[3], d
 	geom_normalize3d(n);
 }
 
-// begin stuff for geom_convex_bound3d
+/* begin stuff for geom_convex_bound3d */
 
 typedef struct Settings_t {
-	// For regularization. Minimum value of abs(D_ii) in the kkt D factor
+	/* For regularization. Minimum value of abs(D_ii) in the kkt D factor */
 	double kkt_reg;
 	double resid_tol;
 	double eps;
 	int max_iters;
 	int refine_steps;
-	// Better start obviates the need for s_init and z_init
+	/* Better start obviates the need for s_init and z_init */
 	double s_init;
 	double z_init;
 } Settings;
 
 typedef struct Workspace_t {
-	double *s_inv; // size n
-	double *s_inv_z; // size n
-	double *rhs; // size 2n+3
-	double *x; // size 2n+3
-	double *lhs_aff; // size 2n+3
-	double *lhs_cc; // size 2n+3
-	double *buffer; // size 2n+3
-	double *d_inv; // size 2n+3
-	double *L; // size 4n+3
+	double *s_inv;   /* size  n   */
+	double *s_inv_z; /* size  n   */
+	double *rhs;     /* size 2n+3 */
+	double *x;       /* size 2n+3 */
+	double *lhs_aff; /* size 2n+3 */
+	double *lhs_cc;  /* size 2n+3 */
+	double *buffer;  /* size 2n+3 */
+	double *d_inv;   /* size 2n+3 */
+	double *L;       /* size 4n+3 */
 } Workspace;
 
-// computes y = A * x
+/* computes y = A * x */
 static void dmmv(unsigned int m, unsigned int n, const double *A, unsigned int ldA, const double *x, double *y){
 	unsigned int i, j;
 	for(i = 0; i < m; ++i){
@@ -281,7 +281,7 @@ static void dmmv(unsigned int m, unsigned int n, const double *A, unsigned int l
 		}
 	}
 }
-// computes y = A^T * x
+/* computes y = A^T * x */
 static void dmmTv(unsigned int m, unsigned int n, const double *A, unsigned int ldA, const double *x, double *y){
 	unsigned int i, j;
 	for(j = 0; j < n; ++j){
@@ -292,11 +292,11 @@ static void dmmTv(unsigned int m, unsigned int n, const double *A, unsigned int 
 	}
 }
 
-// x = inv(L') * inv(D) * inv(L) * b
+/* x = inv(L') * inv(D) * inv(L) * b */
 static void ldl_solve(unsigned int n, const double *L, const double *d_inv, const double *b, double *x){
 	unsigned int i, j;
 	
-	// Forward substitution
+	/* Forward substitution */
 	for(i = 0; i < n; ++i){
 		x[i] = b[i];
 	}
@@ -311,11 +311,11 @@ static void ldl_solve(unsigned int n, const double *L, const double *d_inv, cons
 	}
 	x[2*n+1] -= x[2*n+0]*L[4*n+0];
 	x[2*n+2] -= x[2*n+0]*L[4*n+1] + x[2*n+1]*L[4*n+2];
-	// Diagonal scaling
+	/* Diagonal scaling */
 	for(i = 0; i < n+n+3; i++){
 		x[i] *= d_inv[i];
 	}
-	// Backward substitution
+	/* Backward substitution */
 	x[2*n+1] -= x[2*n+2]*L[4*n+2];
 	x[2*n+0] -= x[2*n+2]*L[4*n+1] + x[2*n+1]*L[4*n+0];
 	for(i = 0; i < n; ++i){
@@ -328,15 +328,16 @@ static void ldl_solve(unsigned int n, const double *L, const double *d_inv, cons
 	}
 }
 
-//     [    I                             ]
-// L = [ inv(sz)          I               ]
-//     [    0     A*inv(b33-inv(sz))   I  ]
-//
-// D = diag([    sz       b33-inv(sz)    -A*inv(b33-inv(sz))*A'  ])
+/*     [    I                             ]
+ * L = [ inv(sz)          I               ]
+ *     [    0     A*inv(b33-inv(sz))   I  ]
+ *
+ * D = diag([    sz       b33-inv(sz)    -A*inv(b33-inv(sz))*A'  ])
+ */
 static void ldl_factor(unsigned int n, const double *s_inv_z, double b33, const double *A, unsigned int ldA, double reg, double *L, double *d_inv){
 	unsigned int i;
 	
-	// Block wise factorization
+	/* Block wise factorization */
 	for(i = 0; i < n; ++i){
 		double dii = s_inv_z[i];
 		if(fabs(dii) < reg){ dii = reg; }
@@ -351,8 +352,8 @@ static void ldl_factor(unsigned int n, const double *s_inv_z, double b33, const 
 		L[n+3*i+1] = A[1+i*ldA] * d_inv[n+i];
 		L[n+3*i+2] = A[2+i*ldA] * d_inv[n+i];
 	}
-	// Compute lower 3x3 diagonal block
-	double d33[9]; // use d33[3] for dii, d33[6] for L32D2
+	/* Compute lower 3x3 diagonal block */
+	double d33[9]; /* use d33[3] for dii, d33[6] for L32D2 */
 	for(i = 0; i < 3; ++i){
 		unsigned j;
 		for(j = 0; j <= i; ++j){
@@ -363,7 +364,7 @@ static void ldl_factor(unsigned int n, const double *s_inv_z, double b33, const 
 			}
 		}
 	}
-	// Perform LDL on 3x3 block
+	/* Perform LDL on 3x3 block */
 	d33[3] = d33[0];
 	if(fabs(d33[3]) < reg){ d33[3] = reg; }
 	d_inv[2*n+0] = 1./d33[3];
@@ -381,10 +382,11 @@ static void ldl_factor(unsigned int n, const double *s_inv_z, double b33, const 
 	d_inv[2*n+2] = 1./d33[3];
 }
 
-// y = KKT*x.
-//       [ sz  I     ]
-// KKT = [ I  b33 A' ]
-//       [     A  0  ]
+/* y = KKT*x.
+ *       [ sz  I     ]
+ * KKT = [ I  b33 A' ]
+ *       [     A  0  ]
+ */
 static void multKKT(unsigned int n, const double *s_inv_z, const double *A, unsigned int ldA, const double *x, double *y){
 	unsigned int i, j;
 	for(i = 0; i < n; ++i){
@@ -415,9 +417,9 @@ static void refine(unsigned int np, const double *p, const Settings *settings, W
 		for(i = 0; i < n23; i++) {
 			residual[i] -= b[i];
 		}
-		// Solve to find new_var = KKT \ (target - A*var)
+		/* Solve to find new_var = KKT \ (target - A*var) */
 		ldl_solve(np, work->L, work->d_inv, residual, y);
-		// Update var += new_var, or var += KKT \ (target - A*var)
+		/* Update var += new_var, or var += KKT \ (target - A*var) */
 		for(i = 0; i < n23; i++) {
 			x[i] -= y[i];
 		}
@@ -425,17 +427,17 @@ static void refine(unsigned int np, const double *p, const Settings *settings, W
 }
 
 static void init_vars2(unsigned int np, const double *p, const double dir[3], const Settings *settings, Workspace *work){
-	// Calculates a better starting point, using a similar approach to CVXOPT
+	/* Calculates a better starting point, using a similar approach to CVXOPT */
 	unsigned int i;
-	double *x, *s, *z;
+	double *x, /* *s, */ *z;
 	double alpha;
 
-	// Make sure sinvz is 1 to make hijacked KKT system ok
+	/* Make sure sinvz is 1 to make hijacked KKT system ok */
 	for(i = 0; i < np; i++){
 		work->s_inv_z[i] = 1;
 	}
 	ldl_factor(np, work->s_inv_z, -1., p, 4, settings->kkt_reg, work->L, work->d_inv);
-	{ // Fill rhs with (0, h, c)
+	{ /* Fill rhs with (0, h, c) */
 		for(i = 0; i < np; i++){
 			work->rhs[i] = 0;
 		}
@@ -446,18 +448,19 @@ static void init_vars2(unsigned int np, const double *p, const double dir[3], co
 			work->rhs[2*np+i] = dir[i];
 		}
 	}
-	// Borrow work.lhs_aff for the solution
+	/* Borrow work.lhs_aff for the solution */
 	ldl_solve(np, work->L, work->d_inv, work->rhs, work->lhs_aff);
-	// Don't do any refinement for now. Precision doesn't matter too much
-	s = work->lhs_aff;
+	/* Don't do any refinement for now. Precision doesn't matter too much */
+	/* s = work->lhs_aff; */
 	z = work->lhs_aff + np;
 	x = work->lhs_aff + 2*np;
 
-	// Just set x and y as is
+	/* Just set x and y as is */
 	for(i = 0; i < 3; i++){ work->x[i] = x[i]; }
 
-	// Now complete the initialization. Start with s
-	// Must have alpha > max(z)
+	/* Now complete the initialization. Start with s
+	 * Must have alpha > max(z)
+	 */
 	alpha = -DBL_MAX;
 	for(i = 0; i < np; i++){
 		if(alpha < z[i]){
@@ -474,8 +477,9 @@ static void init_vars2(unsigned int np, const double *p, const double dir[3], co
 			work->x[3+i] = -z[i] + alpha;
 		}
 	}
-	// Now initialize z
-	// Now must have alpha > max(-z)
+	/* Now initialize z
+	 * Now must have alpha > max(-z)
+	 */
 	alpha = -DBL_MAX;
 	for(i = 0; i < np; i++){
 		if(alpha < -z[i]){
@@ -494,9 +498,10 @@ static void init_vars2(unsigned int np, const double *p, const double dir[3], co
 	}
 }
 
-// Solves the following linear program:
-//  min -dir' * r
-//  s.t. p' * [r;1] <= 0
+/* Solves the following linear program:
+ *  min -dir' * r
+ *  s.t. p' * [r;1] <= 0
+ */
 int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], double r[3], double *wksp){
 	const unsigned int n23 = 2*np+3;
 	Settings settings;
@@ -530,17 +535,17 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 	work.d_inv = work.buffer + n23;
 	work.L = work.d_inv + n23;
 	
-	// previously in workspace
+	/* previously in workspace */
 	int converged = 0;
 	double gap;
-	double optval;
+	/* double optval; */
 	double ineq_resid_squared;
 
-	// first 3 elements of work.x are the actual variables
-	// s is &work.x[3], size np
-	// z is &work.x[np+3], size np
-
-	//printf("iter     objv        gap       |Gx+s-h|    step\n");
+	/* first 3 elements of work.x are the actual variables
+	 * s is &work.x[3], size np
+	 * z is &work.x[np+3], size np
+	 */
+	/*printf("iter     objv        gap       |Gx+s-h|    step\n"); */
 	/*
 	for(i = 0; i < 3; i++){
 		work.x[i] = 0;
@@ -561,19 +566,19 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 		}
 
 		ldl_factor(np, work.s_inv_z, 0., p, 4, settings.kkt_reg, work.L, work.d_inv);
-		{ // Affine scaling directions
-			// r1 = -z
+		{ /* Affine scaling directions */
+			/* r1 = -z */
 			for (i = 0; i < np; i++){ work.rhs[i] = -work.x[np+3+i]; }
-			// r2 = -Gx - s + h
+			/* r2 = -Gx - s + h */
 			dmmTv(3, np, p, 4, work.x, &work.rhs[np]);
 			for(i = 0; i < np; i++){ work.rhs[np+i] += -work.x[3+i] + p[4*i+3]; }
-			// r3 = -A^Ty - G^Tz - Px - q
+			/* r3 = -A^Ty - G^Tz - Px - q */
 			dmmv(3, np, p, 4, &work.x[np+3], &work.rhs[2*np]);
 			for(i = 0; i < 3; i++){ work.rhs[2*np+i] += dir[i]; }
 		}
 		ldl_solve(np, work.L, work.d_inv, work.rhs, work.lhs_aff);
 		refine(np, p, &settings, &work, work.rhs, work.lhs_aff);
-		{ // Centering plus corrector directions
+		{ /* Centering plus corrector directions */
 			double *ds_aff = work.lhs_aff, *dz_aff = work.lhs_aff + np;
 			double mu = 0;
 			double alpha;
@@ -585,7 +590,7 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 				mu += work.x[3+i]*work.x[np+3+i];
 			}
 
-			// Find min(min(ds./s), min(dz./z))
+			/* Find min(min(ds./s), min(dz./z)) */
 			for(i = 0; i < np; i++){
 				if(ds_aff[i] < minval*work.x[3+i]){
 					minval = ds_aff[i]/work.x[3+i];
@@ -597,7 +602,7 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 				}
 			}
 
-			// Find alpha
+			/* Find alpha */
 			if(-1 < minval){
 				alpha = 1;
 			}else{
@@ -615,7 +620,7 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 			mu *= 0.0909090909090909;
 			smu = sigma*mu;
 
-			// Fill-in the rhs
+			/* Fill-in the rhs */
 			for(i = 0; i < np; i++){
 				work.rhs[i] = work.s_inv[i]*(smu - ds_aff[i]*dz_aff[i]);
 			}
@@ -626,16 +631,16 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 		ldl_solve(np, work.L, work.d_inv, work.rhs, work.lhs_cc);
 		refine(np, p, &settings, &work, work.rhs, work.lhs_cc);
 
-		// Add the two together and store in aff
+		/* Add the two together and store in aff */
 		for(i = 0; i < n23; i++){
 			work.lhs_aff[i] += work.lhs_cc[i];
 		}
 
-		// Rename aff to reflect its new meaning
+		/* Rename aff to reflect its new meaning */
 		ds = work.lhs_aff;
 		dz = work.lhs_aff + np;
 		dx = work.lhs_aff + 2*np;
-		// Find min(min(ds./s), min(dz./z))
+		/* Find min(min(ds./s), min(dz./z)) */
 		minval = 0;
 		for(i = 0; i < np; i++){
 			if(ds[i] < minval*work.x[3+i]){
@@ -648,14 +653,14 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 			}
 		}
 
-		// Find alpha
+		/* Find alpha */
 		if(-0.99 < minval){
 			alpha = 1;
 		}else{
 			alpha = -0.99/minval;
 		}
 
-		// Update the primal and dual variables
+		/* Update the primal and dual variables */
 		for(i = 0; i < 3; i++){
 			work.x[i] += alpha*dx[i];
 		}
@@ -671,21 +676,21 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 				gap += work.x[np+3+i]*work.x[3+i];
 			}
 		}
-		{ // Calculate the norm ||-Gx - s + h||
-			// Find -Gx
+		{ /* Calculate the norm ||-Gx - s + h|| */
+			/* Find -Gx */
 			dmmTv(3, np, p, 4, work.x, work.buffer);
-			// Add -s + h
+			/* Add -s + h */
 			for(i = 0; i < np; i++){
 				work.buffer[i] += -work.x[3+i] + p[4*i+3];
 			}
-			// Now find the squared norm
+			/* Now find the squared norm */
 			ineq_resid_squared = 0;
 			for(i = 0; i < np; i++){
 				ineq_resid_squared += work.buffer[i]*work.buffer[i];
 			}
 		}
 
-		optval = -dir[0]*work.x[0]-dir[1]*work.x[1]-dir[2]*work.x[2];
+		/* optval = -dir[0]*work.x[0]-dir[1]*work.x[1]-dir[2]*work.x[2]; */
 		/*
 		printf("%3d   %10.3e  %9.2e  %9.2e  % 6.4f\n",
 			iter+1, optval, gap,
@@ -693,7 +698,7 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 		);
 		*/
 
-		// Test termination conditions. Requires optimality, and satisfied constraints
+		/* Test termination conditions. Requires optimality, and satisfied constraints */
 		if((gap < settings.eps)
 		&& (ineq_resid_squared <= settings.resid_tol*settings.resid_tol)
 		){
@@ -712,14 +717,14 @@ int geom_convex_bound3d(unsigned int np, const double *p, const double dir[3], d
 }
 
 static int triangle_contains(
-	const double org[2], // triangle vertices are {org,org+u,org+v}, in CCW orientation
+	const double org[2], /* triangle vertices are {org,org+u,org+v}, in CCW orientation */
 	const double u[2],
 	const double v[2],
-	const double p[2] // query point
+	const double p[2] /* query point */
 ){
 	if(geom_orient2d(org,u,p) >= 0){
 		if(geom_orient2d(org,v,p) <= 0){
-			// treat org as origin, we have points u and v, just need p-org
+			/* treat org as origin, we have points u and v, just need p-org */
 			double x[2] = {p[0] - org[0], p[1] - org[1]};
 			if(geom_orient2d(u,v,x) >= 0){
 				return 1;
@@ -728,26 +733,27 @@ static int triangle_contains(
 	}
 	return 0;
 }
-// An n-sided polygon always has n-2 triangles in its triangulation.
+/* An n-sided polygon always has n-2 triangles in its triangulation. */
 int geom_polygon_triangulate2d(
-	unsigned int n, const double *v, // the polygon
-	unsigned int *t // length 3*(n-2), stores the triangle as triples of vertex indices into v
+	unsigned int n, const double *v, /* the polygon */
+	unsigned int *t /* length 3*(n-2), stores the triangle as triples of vertex indices into v */
 ){
-	// t is used to store a working copy of the currently clipped polygon vertex index, size 3 <= m <= n.
-	// t must also store the resulting triangles, size 3*(n-m).
-	// The total size of these two is 3*n-2*m, which must be <= 3*(n-2). This is true for m >= 3.
-	// Therefore, we keep the working copy at the very end of t, and add triangles to the beginning.
-	unsigned int *V; // pointer to start of working copy
-	unsigned int nv; // size of V
+	/* t is used to store a working copy of the currently clipped polygon vertex index, size 3 <= m <= n.
+	 * t must also store the resulting triangles, size 3*(n-m).
+	 * The total size of these two is 3*n-2*m, which must be <= 3*(n-2). This is true for m >= 3.
+	 * Therefore, we keep the working copy at the very end of t, and add triangles to the beginning.
+	 */
+	unsigned int *V; /* pointer to start of working copy */
+	unsigned int nv; /* size of V */
 	unsigned int i;
 	int count;
-	int tc = 0; // number of triangles currently in t
+	int tc = 0; /* number of triangles currently in t */
 	
 	if(n < 3){ return -1; }
 	if(NULL == v){ return -2; }
 	if(NULL == t){ return -3; }
 
-	// Make a copy of all the vertices
+	/* Make a copy of all the vertices */
 	V = t + 2*n-6;
 	nv = n;
 	for(i = 0; i < n; ++i){ V[i] = i; }
@@ -762,13 +768,13 @@ int geom_polygon_triangulate2d(
 		fprintf(stderr, "count = %d\n", count);
 		*/
 		int u, w;
-		if(0 >= (count--)){ return 1; } // bad polygon
-		// get 3 consecutive vertices
-		u = i; //if(nv <= u){ u = 0; } // prev
-		i = u+1; if(nv <= i){ i = 0; } // mid
-		w = i+1; if(nv <= w){ w = 0; } // next
+		if(0 >= (count--)){ return 1; } /* bad polygon */
+		/* get 3 consecutive vertices */
+		u = i; /* if(nv <= u){ u = 0; } */ /* prev */
+		i = u+1; if(nv <= i){ i = 0; } /* mid */
+		w = i+1; if(nv <= w){ w = 0; } /* next */
 
-		// Can clip the ear?
+		/* Can clip the ear? */
 		int can_clip = 1;
 		{
 			int p;
@@ -777,7 +783,7 @@ int geom_polygon_triangulate2d(
 			if(geom_orient2d(&v[2*V[u]], &v[2*V[i]], &v[2*V[w]]) < 0){
 				can_clip = 0;
 			}else{
-				// if the u-i-w triangle contains any other vertex, can't clip.
+				/* if the u-i-w triangle contains any other vertex, can't clip. */
 				for(p = 0; p < nv; ++p){
 					if((p == u) || (p == i) || (p == w)){ continue; }
 					if(triangle_contains(&v[2*V[u]],tri_a,tri_b, &v[2*V[p]])){ can_clip = 0; break; }
@@ -785,16 +791,16 @@ int geom_polygon_triangulate2d(
 			}
 		}
 
-		// Clip off the ear
+		/* Clip off the ear */
 		if(can_clip){
 			unsigned int tri[3] = {V[u], V[i], V[w]};
-			// erase vertex i
+			/* erase vertex i */
 			while(i > 0){
 				V[i] = V[i-1];
 				--i;
 			}
 			++V; --nv; count = 2*nv;
-			// Add the new triangle
+			/* Add the new triangle */
 			t[3*tc+0] = tri[0];
 			t[3*tc+1] = tri[1];
 			t[3*tc+2] = tri[2];
@@ -813,7 +819,7 @@ static int segments_intersect(const double a[2], const double b[2], const double
 	double c0, c1, c2, c3;
 	c0 = geom_orient2d(a,b,c);
 	c1 = geom_orient2d(a,b,d);
-	if(0 == c0 && 0 == c1){ return 0; } // collinear -> no intersection
+	if(0 == c0 && 0 == c1){ return 0; } /* collinear -> no intersection */
 	if(dsign(c0) != dsign(c1)){
 		c2 = geom_orient2d(c, d, a);
 		c3 = geom_orient2d(c, d, b);
@@ -837,12 +843,12 @@ static int segments_intersect(const double a[2], const double b[2], const double
 	}else{ return 0; }
 }
 int geom_convex_polygon_intersection2d(
-	unsigned int n, // n >= 3
+	unsigned int n, /* n >= 3 */
 	const double *P,
-	unsigned int m, // m >= 3
+	unsigned int m, /* m >= 3 */
 	const double *Q,
-	unsigned int *ni, // on input, size of Pi, on output, numer of points in Pi
-	double *Pi // output intersection polygon
+	unsigned int *ni, /* on input, size of Pi, on output, numer of points in Pi */
+	double *Pi /* output intersection polygon */
 ){
 	int i, j;
 	if(n < 3){ return -1; }
@@ -852,17 +858,18 @@ int geom_convex_polygon_intersection2d(
 	if(NULL == ni){ return -5; }
 	if(NULL == Pi){ return -6; }
 
-	// Implementation of:
-	// "A new linear algorithm for intersecting convex polygons"
-	// Joseph O'Rourke, Chi-Bin Chien, Thomas Olson, and David Naddor
-	// Computer Graphics and Image Processing 19, pp. 384-391 (1982)
+	/* Implementation of:
+	 * "A new linear algorithm for intersecting convex polygons"
+	 * Joseph O'Rourke, Chi-Bin Chien, Thomas Olson, and David Naddor
+	 * Computer Graphics and Image Processing 19, pp. 384-391 (1982)
+	 */
 	
 	const unsigned int nPi = *ni; *ni = 0;
 	
 	int ip = 1, iq = 1;
-	int ipp = 0, iqp = 0; // prev of ip and iq
+	int ipp = 0, iqp = 0; /* prev of ip and iq */
 	char inside = ' ';
-	// record first intersection
+	/* record first intersection */
 	int first_xsected = 0;
 	int ipf = n, iqf = m;
 	int first_iter = 0;
@@ -870,7 +877,7 @@ int geom_convex_polygon_intersection2d(
 	int Pi_full = 0;
 	int iter;
 
-	// First, a bounding box check
+	/* First, a bounding box check */
 	{
 		int iP_x_min = 0, iP_x_max = 0, iP_y_min = 0, iP_y_max = 0;
 		int iQ_x_min = 0, iQ_x_max = 0, iQ_y_min = 0, iQ_y_max = 0;
@@ -895,16 +902,16 @@ int geom_convex_polygon_intersection2d(
 	}
 
 	for(iter = 0; iter <= 2*(m+n); ++iter){
-//fprintf(stderr, "iter %d, ip = %d, iq = %d, inside = %c\n", iter, ip, iq, inside);
+/*fprintf(stderr, "iter %d, ip = %d, iq = %d, inside = %c\n", iter, ip, iq, inside); */
 		double xp[2];
 		if(segments_intersect(&P[2*ipp],&P[2*ip],&Q[2*iqp],&Q[2*iq],xp, NULL)){
-//fprintf(stderr, " xsect! %f,%f %f,%f %f,%f %f,%f\n", P[2*ipp+0],P[2*ipp+1],P[2*ip+0],P[2*ip+1],Q[2*iqp+0],Q[2*iqp+1],Q[2*iq+0],Q[2*iq+1]);
-			if(first_xsected && first_iter != iter-1){ // if the first intersection was NOT found during the previous iteration
-				if(ip == ipf && iq == iqf){ break; } // if this intersection is the same as the first intersection
+/*fprintf(stderr, " xsect! %f,%f %f,%f %f,%f %f,%f\n", P[2*ipp+0],P[2*ipp+1],P[2*ip+0],P[2*ip+1],Q[2*iqp+0],Q[2*iqp+1],Q[2*iq+0],Q[2*iq+1]); */
+			if(first_xsected && first_iter != iter-1){ /* if the first intersection was NOT found during the previous iteration */
+				if(ip == ipf && iq == iqf){ break; } /* if this intersection is the same as the first intersection */
 			}
 			if(*ni >= nPi){ Pi_full = 1; }
 			if(!Pi_full){ Pi[2*(*ni)+0] = xp[0]; Pi[2*(*ni)+1] = xp[1]; (*ni)++; }
-//fprintf(stderr, "  Adding %f,%f\n", Pi[2*((*ni)-1)+0], Pi[2*((*ni)-1)+1]);
+/*fprintf(stderr, "  Adding %f,%f\n", Pi[2*((*ni)-1)+0], Pi[2*((*ni)-1)+1]); */
 			if(geom_orient2d(&Q[2*iqp],&Q[2*iq],&P[2*ip]) >= 0){
 				inside = 'P';
 			}else{ inside = 'Q'; }
@@ -918,14 +925,14 @@ int geom_convex_polygon_intersection2d(
 		xp[0] = P[2*ip+0] + (Q[2*iq+0] - P[2*ipp+0]);
 		xp[1] = P[2*ip+1] + (Q[2*iq+1] - P[2*ipp+1]);
 		if(geom_orient2d(&Q[2*iqp],&Q[2*iq],xp)/*Cross(Q[2*iq]-Q[2*iqp],P[2*ip]-P[2*ipp])*/ >= 0){
-			if(geom_orient2d(&Q[2*iqp],&Q[2*iq],&P[2*ip]) >= 0){ // advance Q
+			if(geom_orient2d(&Q[2*iqp],&Q[2*iq],&P[2*ip]) >= 0){ /* advance Q */
 				if(inside == 'Q'){
 					if(*ni >= nPi){ Pi_full = 1; }
 					if(!Pi_full){ Pi[2*(*ni)+0] = Q[2*iq+0]; Pi[2*(*ni)+1] = Q[2*iq+1]; (*ni)++; }
 				}
 				iqp = iq;
 				iq = (iq+1)%m;
-			}else{ // advance P
+			}else{ /* advance P */
 				if(inside == 'P'){
 					if(*ni >= nPi){ Pi_full = 1; }
 					if(!Pi_full){ Pi[2*(*ni)+0] = P[2*ip+0]; Pi[2*(*ni)+1] = P[2*ip+1]; (*ni)++; }
@@ -934,14 +941,14 @@ int geom_convex_polygon_intersection2d(
 				ip = (ip+1)%n;
 			}
 		}else{
-			if(geom_orient2d(&P[2*ipp],&P[2*ip],&Q[2*iq]) >= 0){ // advance P
+			if(geom_orient2d(&P[2*ipp],&P[2*ip],&Q[2*iq]) >= 0){ /* advance P */
 				if(inside == 'P'){
 					if(*ni >= nPi){ Pi_full = 1; }
 					if(!Pi_full){ Pi[2*(*ni)+0] = P[2*ip+0]; Pi[2*(*ni)+1] = P[2*ip+1]; (*ni)++; }
 				}
 				ipp = ip;
 				ip = (ip+1)%n;
-			}else{ // advance Q
+			}else{ /* advance Q */
 				if(inside == 'Q'){
 					if(*ni >= nPi){ Pi_full = 1; }
 					if(!Pi_full){ Pi[2*(*ni)+0] = Q[2*iq+0]; Pi[2*(*ni)+1] = Q[2*iq+1]; (*ni)++; }
@@ -951,17 +958,17 @@ int geom_convex_polygon_intersection2d(
 			}
 		}
 	}
-	// At this point, either P in Q, Q in P, or they don't intersect
+	/* At this point, either P in Q, Q in P, or they don't intersect */
 	if(*ni == 0){
 		int flag = 1;
-		for(j = 0; j < n; ++j){ // really we only need to check j == 0, but due to degeneracy, it is safest to check all
+		for(j = 0; j < n; ++j){ /* really we only need to check j == 0, but due to degeneracy, it is safest to check all */
 			for(i = 0; i < m; ++i){
 				if(geom_orient2d(&Q[2*i],&Q[2*((i+1)%m)], &P[2*j]) < 0){
 					flag = 0; j = n+1; break;
 				}
 			}
 		}
-		if(flag){ // P in Q
+		if(flag){ /* P in Q */
 			if(*ni+n >= nPi){ Pi_full = 1; }
 			if(!Pi_full){
 				for(i = 0; i < n; ++i){
@@ -971,14 +978,14 @@ int geom_convex_polygon_intersection2d(
 			}
 		}else{
 			flag = 1;
-			for(j = 0; j < m; ++j){ // really we only need to check j == 0, but due to degeneracy, it is safest to check all
+			for(j = 0; j < m; ++j){ /* really we only need to check j == 0, but due to degeneracy, it is safest to check all */
 				for(i = 0; i < n; ++i){
 					if(geom_orient2d(&P[2*i],&P[2*((i+1)%n)],&Q[2*j]) < 0){
 						flag = 0; j = m+1; break;
 					}
 				}
 			}
-			if(flag){ // Q in P
+			if(flag){ /* Q in P */
 				if(*ni+m >= nPi){ Pi_full = 1; }
 				if(!Pi_full){
 					for(i = 0; i < m; ++i){

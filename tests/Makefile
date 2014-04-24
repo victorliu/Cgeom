@@ -20,4 +20,8 @@ test_bvh_mem: test_common.h test_bvh_mem.c ../geom_bvh.c
 test_shapeset: test_common.h test_shapeset.c ../geom_bvh.c ../geom_shapes.c ../geom_la.c ../geom_shapeset.c ../geom_poly.c
 	gcc $(CFLAGS) test_common.c test_shapeset.c ../geom_bvh.c ../geom_shapes.c ../geom_predicates.c ../geom_la.c ../geom_shapeset.c ../geom_poly.c -I.. -I. $(DUMALIB) -o test_shapeset $(LIBS)
 test_arc: test_common.h test_arc.c ../geom_arc.c
-	gcc $(CFLAGS) test_common.c test_arc.c ../geom_arc.c -I.. -I. -o test_arc $(LIBS)
+	gcc $(CFLAGS) -I../.. test_common.c test_arc.c ../geom_arc.c ../geom_sphereavg.c ../geom_la.c -I.. -I. -o test_arc $(LIBS)
+test_arc_unparam: test_common.h test_arc_unparam.c ../geom_arc.c
+	gcc $(CFLAGS) -I.. -I../.. -I. test_common.c test_arc_unparam.c ../geom_arc.c ../geom_sphereavg.c ../geom_la.c -o test_arc_unparam $(LIBS)
+test_circle_fit: test_common.h test_circle_fit.c ../geom_circum.c
+	gcc $(CFLAGS) test_common.c test_circle_fit.c ../geom_circum.c ../geom_predicates.c -I.. -I. -o test_circle_fit $(LIBS)

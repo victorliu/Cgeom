@@ -22,23 +22,44 @@ int main(int argc, char *argv[]){
 	
 	printf(
 		"72 72 scale\n"
-		"8 8 scale\n"
-		"0.0625 0.375 translate\n"
+		"4 4 scale\n"
+		"0.25 0.75 translate\n"
 		"0.001 setlinewidth\n"
 		"/Courier findfont 0.03 scalefont setfont\n"
 	);
 	
 	for(i = 0; i < 1; ++i){
-		double a[2] = { frand(), frand() };
-		double b[2] = { frand(), frand() };
-		double g = exp(8.*(frand() - 0.5));
+		double a[2], b[2], c[2], g;
+		for(j = 0; j <= 1435; ++j){
+			a[0] = frand();
+			a[1] = frand();
+			b[0] = frand();
+			b[1] = frand();
+			c[0] = frand();
+			c[1] = frand();
+		}
+		
+		g = exp(8.*(frand() - 0.5));
 		if(1 & rand()){
 			g = -g;
 		}
 		
-		printf("0 0.06 moveto (a = %g, %g) show\n", a[0], a[1]);
-		printf("0 0.03 moveto (b = %g, %g) show\n", b[0], b[1]);
-		printf("0 0 moveto (g = %g) show\n", g);
+		
+		printf("%g %g moveto %g %g 0.002 0 360 arc fill\n",
+			c[0], c[1], c[0], c[1]
+		);
+		
+		//g = geom_arc_g_from_pt(a, b, c);
+		
+		printf("newpath %g %g moveto (a) show\n", a[0], a[1]);
+		printf("newpath %g %g moveto (b) show\n", b[0], b[1]);
+		printf("newpath %g %g moveto (c) show\n", c[0], c[1]);
+		
+		printf("gsave 0 -0.5 translate\n");
+		printf("0 0.09 moveto (a = %g, %g) show\n", a[0], a[1]);
+		printf("0 0.06 moveto (b = %g, %g) show\n", b[0], b[1]);
+		printf("0 0.03 moveto (c = %g, %g) show\n", c[0], c[1]);
+		printf("0 0 moveto (g = %g) show grestore\n", g);
 		
 		printf("%g %g moveto %g %g lineto stroke\n",
 			a[0], a[1], b[0], b[1]
@@ -76,7 +97,43 @@ int main(int argc, char *argv[]){
 		}
 		printf("stroke\n");
 		
+		for(i = 0; i <= k; ++i){
+			double s = (double)i/(double)k;
+			double p[2], t[2];
+			geom_arc_param(a, b, g, s, p, t);
+			printf("newpath %g %g 0.002 0 360 arc fill\n", p[0], p[1]);
+			printf("newpath %g %g moveto %g %g rlineto stroke\n", p[0], p[1], t[0], t[1]);
+		}
 		
+		if(0){
+			double c[2], theta[2];
+			double r;
+			geom_arc_circle(a, b, g, c, &r, theta);
+			printf("newpath %g %g %g %g %g arc%c stroke\n",
+				c[0], c[1], r * 0.9, theta[0]*180/M_PI, theta[1]*180/M_PI,
+				(g < 0 ? 'n' : ' ')
+			);
+		}
+		
+		
+		{
+			double pg[17];
+			int n = geom_arc_split_monotone(a, b, g, pg);
+			for(i = 0; i < n; ++i){
+				double c[2];
+				double r;
+				double theta[2];
+				geom_arc_circle(&pg[3*i+0], &pg[3*(i+1)+0], pg[3*i+2], c, &r, theta);
+				printf(" newpath %g %g %g %g %g arc%c stroke\n",
+					c[0], c[1], r * (0.7 + 0.05*i),
+					theta[0]*180/M_PI, theta[1]*180/M_PI,
+					(g < 0 ? 'n' : ' ')
+				);
+			}
+			for(i = 0; i <= n; ++i){
+				printf("newpath %g %g 0.005 0 360 arc fill\n", pg[3*i+0], pg[3*i+1]);
+			}
+		}
 	}
 	
 	

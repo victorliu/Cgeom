@@ -204,6 +204,37 @@ double geom_dot4d(const double a[4], const double b[4]){
 	return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
 }
 
+float  geom_cross2f(const float  a[2], const float  b[2]){
+	/* Compute a x b. Since a x (b - a*s) is the same in exact arithmetic,
+	 * it is sometimes better to let s be nonzero when a and b are nearly
+	 * parallel.
+	 */
+	float dot = a[0]*b[0]+a[1]*b[1];
+	float cross = a[0]*b[1] - a[1]*b[0];
+	if(cross > dot){ return cross; }
+	else{
+		const double s = round(dot / (a[0]*a[0] + a[1]*a[1]));
+		double bb[2] = {
+			b[0] - a[0]*s,
+			b[1] - a[1]*s
+		};
+		return a[0]*bb[1] - a[1]*bb[0];
+	}
+}
+double geom_cross2d(const double a[2], const double b[2]){
+	float dot = a[0]*b[0]+a[1]*b[1];
+	float cross = a[0]*b[1] - a[1]*b[0];
+	if(cross > dot){ return cross; }
+	else{
+		const double s = round(dot / (a[0]*a[0] + a[1]*a[1]));
+		double bb[2] = {
+			b[0] - a[0]*s,
+			b[1] - a[1]*s
+		};
+		return a[0]*bb[1] - a[1]*bb[0];
+	}
+}
+
 void geom_cross3f(const float  a[3], const float  b[3], float  result[3]){
 	result[0] = a[1]*b[2] - a[2]*b[1];
 	result[1] = a[2]*b[0] - a[0]*b[2];
