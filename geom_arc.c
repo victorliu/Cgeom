@@ -124,6 +124,22 @@ double geom_arc_g_from_pt(const double *a, const double *b, const double *c){
 	}
 }
 
+double geom_arc_g_from_hull(const double *a, const double *b, const double *c){
+	const double ac2 = (a[0]-c[0])*(a[0]-c[0]) + (a[1]-c[1])*(a[1]-c[1]);
+	const double bc2 = (b[0]-c[0])*(b[0]-c[0]) + (b[1]-c[1])*(b[1]-c[1]);
+	double sinq, cosq, g;
+	if(ac2 >= bc2){ /* segment AC defines endpoint tangent */
+		sinq = (c[0]-a[0])*(b[1]-a[1]) - (c[1]-a[1])*(b[0]-a[0]);
+		cosq = (c[0]-a[0])*(b[0]-a[0]) + (c[1]-a[1])*(b[1]-a[1]);
+	}else{ /* segment BC defines endpoint tangent */
+		sinq = (a[0]-b[0])*(c[1]-b[1]) - (a[1]-b[1])*(c[0]-b[0]);
+		cosq = (a[0]-b[0])*(c[0]-b[0]) + (a[1]-b[1])*(c[1]-b[1]);
+	}
+	g = qsolve(1, sinq, cosq);
+	if((sinq >= 0 && g < 0) || (sinq < 0 && g >= 0)){ return -1./g; }
+	else{ return g; }
+}
+
 double geom_arc_length(const double a[2], const double b[2], double g){
 	const double t = 0.5 * hypot(b[0]-a[0], b[1]-a[1]);
 	if(0 == g){
