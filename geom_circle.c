@@ -1,3 +1,4 @@
+#include <math.h>
 #include <Cgeom/geom_la.h>
 
 int geom_circle_circle_intersect(
@@ -20,13 +21,13 @@ int geom_circle_circle_intersect(
 	if(dl == rdiff){
 		if(r1 > r2){
 			double t = r2/dl;
-			p[0] = (1+t)c2[0] - t*c1[0];
-			p[1] = (1+t)c2[1] - t*c1[1];
+			p[0] = (1+t)*c2[0] - t*c1[0];
+			p[1] = (1+t)*c2[1] - t*c1[1];
 			return 1;
 		}else{
 			double t = r1/dl;
-			p[0] = (1+t)c1[0] - t*c2[0];
-			p[1] = (1+t)c1[1] - t*c2[1];
+			p[0] = (1+t)*c1[0] - t*c2[0];
+			p[1] = (1+t)*c1[1] - t*c2[1];
 			return 1;
 		}
 	}
@@ -42,17 +43,17 @@ int geom_circle_circle_intersect(
 	double t = 0.5*(1+(q1+q2)*(q1-q2));
 	double s = (q1-t)*(q1+t);
 	if(0 == s){
-		p[0] = (1-t)*c[0] + t*c2[0];
-		p[1] = (1-t)*c[1] + t*c2[1];
+		p[0] = (1-t)*c1[0] + t*c2[0];
+		p[1] = (1-t)*c1[1] + t*c2[1];
 		return 1;
 	}else if(s < 0){
 		return 0;
 	}else{
 		s = sqrt(s);
-		p[0] = (1-t)*c[0] + t*c2[0] - s*(c2[1]-c1[1]);
-		p[1] = (1-t)*c[1] + t*c2[1] + s*(c2[0]-c1[0]);
-		p[2] = (1-t)*c[0] + t*c2[0] + s*(c2[1]-c1[1]);
-		p[3] = (1-t)*c[1] + t*c2[1] - s*(c2[0]-c1[0]);
+		p[0] = (1-t)*c1[0] + t*c2[0] - s*(c2[1]-c1[1]);
+		p[1] = (1-t)*c1[1] + t*c2[1] + s*(c2[0]-c1[0]);
+		p[2] = (1-t)*c1[0] + t*c2[0] + s*(c2[1]-c1[1]);
+		p[3] = (1-t)*c1[1] + t*c2[1] - s*(c2[0]-c1[0]);
 		return 2;
 	}
 }
