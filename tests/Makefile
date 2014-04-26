@@ -25,3 +25,5 @@ test_arc_unparam: test_common.h test_arc_unparam.c ../geom_arc.c
 	gcc $(CFLAGS) -I.. -I../.. -I. test_common.c test_arc_unparam.c ../geom_arc.c ../geom_sphereavg.c ../geom_la.c -o test_arc_unparam $(LIBS)
 test_circle_fit: test_common.h test_circle_fit.c ../geom_circum.c
 	gcc $(CFLAGS) test_common.c test_circle_fit.c ../geom_circum.c ../geom_predicates.c -I.. -I. -o test_circle_fit $(LIBS)
+test_polyline_thicken: test_common.h test_polyline_thicken.c ../geom_arclinegraph.c
+	gcc $(CFLAGS) -I../.. test_common.c test_polyline_thicken.c ../geom_arclinegraph.c ../geom_la.c -I.. -I. -o test_polyline_thicken $(LIBS)

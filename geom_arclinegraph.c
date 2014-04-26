@@ -1,4 +1,7 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include <Cgeom/geom_la.h>
+#include <Cgeom/geom_arc.h>
 
 /* Given a simply connected polyline (not closed) defined by a
  * sequence of n points (and so there are n-1 segments), produce
@@ -101,7 +104,7 @@ int arclinegraph_thicken(
 		tv[2*(2*i+1)+0] = -tv[2*(2*i+1)+0];
 		tv[2*(2*i+1)+1] = -tv[2*(2*i+1)+1];
 	}
-	/* tangents point towards middle of arc */
+	/* tangents point towards middle of arc (inward instead of outward) */
 	
 	/* Join the halfedges by finding the next element */
 	for(i = 0; i < n2; ++i){
@@ -151,10 +154,12 @@ int arclinegraph_thicken(
 		const unsigned jo = j&1;
 		double dot = tv[2*i+0]*tv[2*j+0] + tv[2*i+1]*tv[2*j+1];
 		if(half[2*i+1] == j || 1 == dot){ /* endpoint cap */
+			
 		}else{
 		}
 	}
 	
 	free(tv);
 	free(half);
+	return 0;
 }

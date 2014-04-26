@@ -81,3 +81,17 @@ int geom_arc_intersect(
 	const double a2[2], const double b2[2], double g2,
 	double p[4]
 );
+
+/* Compute the offset curve to the arc.
+ * Note that g stays the same.
+ * Otherwise, the arc is extended by d on both ends.
+ */
+void geom_arc_offset(
+	const double a[2], const double b[2], double g,
+	double d, double ao[2], double bo[2]
+);
+
+void geom_arc_extend(
+	const double a[2], const double b[2], double g,
+	const double d[2], double ao[2], double bo[2], double *go
+);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <math.h>
+#include <Cgeom/geom_la.h>
 #include <Cgeom/geom_sphereavg.h>
 
 #define G_QUARTER 0.4142135623730950488
@@ -604,6 +605,116 @@ int geom_arc_split_monotone(
 			pg[3] = b[0]; pg[4] = b[1];
 			return 1;
 		}
+	}
+}
+
+void geom_arc_offset(
+	const double a[2], const double b[2], double g,
+	double d, double ao[2], double bo[2]
+){
+	if(g <= G_QUARTER){ /* Can compute Q; apex of triangular hull */
+		/* Q = M + N t tan theta */
+		const double M[2] = { 0.5*a[0]+0.5*b[0], 0.5*a[1]+0.5*b[1] };
+		const double ab[2] = { b[0]+a[0], b[1]+a[1] };
+		const double gg = g/((1+g)*(1-g));
+		const double Q[2] = { M[0] + ab[1]*gg, M[1] - ab[0]*gg };
+		const double AQ[2] = { Q[0]-a[0], Q[1]-a[1] };
+		const double QB[2] = { b[0]-Q[0], b[1]-Q[1] };
+		const double delta = d/geom_norm2d(AQ);
+		ao[0] = a[0] + delta * AQ[1];
+		ao[1] = a[1] - delta * AQ[0];
+		bo[0] = b[0] + delta * QB[1];
+		bo[1] = b[1] - delta * QB[0];
+	}else{
+		double c[2], r, theta[2];
+		geom_arc_circle(a, b, g, c, &r, theta);
+		double rd = r+d;
+		ao[0] = c[0] + rd*cos(theta[0]);
+		ao[1] = c[1] + rd*sin(theta[0]);
+		bo[0] = c[0] + rd*cos(theta[1]);
+		bo[1] = c[1] + rd*sin(theta[1]);
+	}
+}
+
+static double sinc_from_sin(double x, double s){
+	if(0 == x){ return 0; }
+	if(x < 0){ x = -x; s = -s; }
+	if(x < 1e-9){ return 1. - x*x*(1./6.); }
+	return s/x;
+}
+
+void geom_arc_extend(
+	const double a[2], const double b[2], double g,
+	const double d[2], double ao[2], double bo[2], double *go
+){
+	/* Note: Let a = tan x, b = tan y, c = tan z
+	 *   tan(x+y+z) = [ (a+b+c) - (abc) ] / [ 1 - (ab+bc+ca) ]
+	 */
+	if(g <= G_QUARTER){
+		/* dq = delta theta's */
+		const double am[2] = { 0.5*b[0]-0.5*a[0], 0.5*b[1]-0.5*a[1] };
+		const double t = geom_norm2d(am);
+		const double gg1 = (1-g)*(1+g) / (1+g*g);
+		if(d[0] == d[1]){
+			const double dl = d[0]/t;
+			const double dq = dl * (2.*g/(1.+g*g));
+			const double sin_dq = sin(dq);
+			const double sinc_dq = sinc_from_sin(dq, sin_dq);
+			const double tan_hdq = tan(0.5*dq);
+			double tmp[2];
+			tmp[0] = am[0] * sin_dq + dl * gg1 * sinc_dq * am[1];
+			tmp[1] = am[1] * sin_dq - dl * gg1 * sinc_dq * am[0];
+			ao[0] = a[0] + tan_hdq*tmp[0] + tmp[1];
+			ao[1] = a[1] + tan_hdq*tmp[1] - tmp[0];
+			
+			tmp[0] = -am[0] * sin_dq + dl * gg1 * sinc_dq * am[1];
+			tmp[1] = -am[1] * sin_dq - dl * gg1 * sinc_dq * am[0];
+			bo[0] = b[0] + tan_hdq*tmp[0] + tmp[1];
+			bo[1] = b[1] + tan_hdq*tmp[1] - tmp[0];
+			const double tandq = tan(dq);
+			*go = (g + tandq) / (1 - g*tandq);
+		}else{
+			const double dl[2] = { d[0]/t, d[1]/t };
+			const double dq[2] = { dl[0] * (2.*g/(1.+g*g)), dl[1] * (2.*g/(1.+g*g)) };
+			const double sin_dq[2] = { sin(dq[0]), sin(dq[1]) };
+			const double tan_hdq[2] = { tan(0.5*dq[0]), tan(0.5*dq[1]) };
+			const double sinc_dq[2] = { sinc_from_sin(dq[0], sin_dq[0]), sinc_from_sin(dq[1], sin_dq[1]) };
+			double tmp[2];
+			tmp[0] = am[0] * sin_dq[0] + dl[0] * gg1 * sinc_dq[0] * am[1];
+			tmp[1] = am[1] * sin_dq[0] - dl[0] * gg1 * sinc_dq[0] * am[0];
+			ao[0] = a[0] + tan_hdq[0]*tmp[0] + tmp[1];
+			ao[1] = a[1] + tan_hdq[0]*tmp[1] - tmp[0];
+			
+			tmp[0] = -am[0] * sin_dq[1] + dl[0] * gg1 * sinc_dq[0] * am[1];
+			tmp[1] = -am[1] * sin_dq[1] - dl[0] * gg1 * sinc_dq[0] * am[0];
+			bo[0] = b[0] + tan_hdq[1]*tmp[0] + tmp[1];
+			bo[1] = b[1] + tan_hdq[1]*tmp[1] - tmp[0];
+			const double tandq = tan(0.5*(dq[0]+dq[1]));
+			*go = (g + tandq) / (1 - g*tandq);
+		}
+	}else{
+		double c[2], r, theta[2];
+		geom_arc_circle(a, b, g, c, &r, theta);
+		if(d[0] == d[1]){
+			const double dq = d[0]/r;
+			theta[0] -= dq;
+			theta[1] += dq;
+			/* New g = g', so g' = tan(theta/2 + dtheta)
+			 *                   = (g + tan dtheta) / (1 - g*tan dtheta)
+			 */
+			const double tandq = tan(dq);
+			*go = (g + tandq) / (1 - g*tandq);
+		}else{
+			theta[0] -= d[0]/r;
+			theta[1] += d[1]/r;
+			const double t1 = tan(0.5*d[0]/r);
+			const double t2 = tan(0.5*d[1]/r);
+			*go = ((g+t1+t2) - (g*t1*t2)) / (1 - g*t1 - g*t2 - t1*t2);
+		}
+		ao[0] = c[0] + r*cos(theta[0]);
+		ao[1] = c[1] + r*sin(theta[0]);
+		bo[0] = c[0] + r*cos(theta[1]);
+		bo[1] = c[1] + r*sin(theta[1]);
 	}
 }
 
