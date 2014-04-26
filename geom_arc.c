@@ -612,10 +612,10 @@ void geom_arc_offset(
 	const double a[2], const double b[2], double g,
 	double d, double ao[2], double bo[2]
 ){
-	if(g <= G_QUARTER){ /* Can compute Q; apex of triangular hull */
+	if(fabs(g) <= G_QUARTER){ /* Can compute Q; apex of triangular hull */
 		/* Q = M + N t tan theta */
 		const double M[2] = { 0.5*a[0]+0.5*b[0], 0.5*a[1]+0.5*b[1] };
-		const double ab[2] = { b[0]+a[0], b[1]+a[1] };
+		const double ab[2] = { b[0]-a[0], b[1]-a[1] };
 		const double gg = g/((1+g)*(1-g));
 		const double Q[2] = { M[0] + ab[1]*gg, M[1] - ab[0]*gg };
 		const double AQ[2] = { Q[0]-a[0], Q[1]-a[1] };
@@ -650,7 +650,7 @@ void geom_arc_extend(
 	/* Note: Let a = tan x, b = tan y, c = tan z
 	 *   tan(x+y+z) = [ (a+b+c) - (abc) ] / [ 1 - (ab+bc+ca) ]
 	 */
-	if(g <= G_QUARTER){
+	if(fabs(g) <= G_QUARTER){
 		/* dq = delta theta's */
 		const double am[2] = { 0.5*b[0]-0.5*a[0], 0.5*b[1]-0.5*a[1] };
 		const double t = geom_norm2d(am);
@@ -662,16 +662,16 @@ void geom_arc_extend(
 			const double sinc_dq = sinc_from_sin(dq, sin_dq);
 			const double tan_hdq = tan(0.5*dq);
 			double tmp[2];
-			tmp[0] = am[0] * sin_dq + dl * gg1 * sinc_dq * am[1];
-			tmp[1] = am[1] * sin_dq - dl * gg1 * sinc_dq * am[0];
-			ao[0] = a[0] + tan_hdq*tmp[0] + tmp[1];
-			ao[1] = a[1] + tan_hdq*tmp[1] - tmp[0];
+			tmp[0] = am[0] * sin_dq - dl * gg1 * sinc_dq * am[1];
+			tmp[1] = am[1] * sin_dq + dl * gg1 * sinc_dq * am[0];
+			ao[0] = a[0] + tan_hdq*tmp[0] - tmp[1];
+			ao[1] = a[1] + tan_hdq*tmp[1] + tmp[0];
 			
-			tmp[0] = -am[0] * sin_dq + dl * gg1 * sinc_dq * am[1];
-			tmp[1] = -am[1] * sin_dq - dl * gg1 * sinc_dq * am[0];
+			tmp[0] = -am[0] * sin_dq - dl * gg1 * sinc_dq * am[1];
+			tmp[1] = -am[1] * sin_dq + dl * gg1 * sinc_dq * am[0];
 			bo[0] = b[0] + tan_hdq*tmp[0] + tmp[1];
 			bo[1] = b[1] + tan_hdq*tmp[1] - tmp[0];
-			const double tandq = tan(dq);
+			const double tandq = tan(0.5*dq);
 			*go = (g + tandq) / (1 - g*tandq);
 		}else{
 			const double dl[2] = { d[0]/t, d[1]/t };
@@ -680,16 +680,16 @@ void geom_arc_extend(
 			const double tan_hdq[2] = { tan(0.5*dq[0]), tan(0.5*dq[1]) };
 			const double sinc_dq[2] = { sinc_from_sin(dq[0], sin_dq[0]), sinc_from_sin(dq[1], sin_dq[1]) };
 			double tmp[2];
-			tmp[0] = am[0] * sin_dq[0] + dl[0] * gg1 * sinc_dq[0] * am[1];
-			tmp[1] = am[1] * sin_dq[0] - dl[0] * gg1 * sinc_dq[0] * am[0];
-			ao[0] = a[0] + tan_hdq[0]*tmp[0] + tmp[1];
-			ao[1] = a[1] + tan_hdq[0]*tmp[1] - tmp[0];
+			tmp[0] = am[0] * sin_dq[0] - dl[0] * gg1 * sinc_dq[0] * am[1];
+			tmp[1] = am[1] * sin_dq[0] + dl[0] * gg1 * sinc_dq[0] * am[0];
+			ao[0] = a[0] + tan_hdq[0]*tmp[0] - tmp[1];
+			ao[1] = a[1] + tan_hdq[0]*tmp[1] + tmp[0];
 			
-			tmp[0] = -am[0] * sin_dq[1] + dl[0] * gg1 * sinc_dq[0] * am[1];
-			tmp[1] = -am[1] * sin_dq[1] - dl[0] * gg1 * sinc_dq[0] * am[0];
+			tmp[0] = -am[0] * sin_dq[1] - dl[1] * gg1 * sinc_dq[0] * am[1];
+			tmp[1] = -am[1] * sin_dq[1] + dl[1] * gg1 * sinc_dq[0] * am[0];
 			bo[0] = b[0] + tan_hdq[1]*tmp[0] + tmp[1];
 			bo[1] = b[1] + tan_hdq[1]*tmp[1] - tmp[0];
-			const double tandq = tan(0.5*(dq[0]+dq[1]));
+			const double tandq = tan(0.25*(dq[0]+dq[1]));
 			*go = (g + tandq) / (1 - g*tandq);
 		}
 	}else{
@@ -702,14 +702,13 @@ void geom_arc_extend(
 			/* New g = g', so g' = tan(theta/2 + dtheta)
 			 *                   = (g + tan dtheta) / (1 - g*tan dtheta)
 			 */
-			const double tandq = tan(dq);
+			const double tandq = tan(0.5*dq);
 			*go = (g + tandq) / (1 - g*tandq);
 		}else{
 			theta[0] -= d[0]/r;
 			theta[1] += d[1]/r;
-			const double t1 = tan(0.5*d[0]/r);
-			const double t2 = tan(0.5*d[1]/r);
-			*go = ((g+t1+t2) - (g*t1*t2)) / (1 - g*t1 - g*t2 - t1*t2);
+			const double t = tan(0.25*(d[0]+d[1])/r);
+			*go = (g+t) / (1 - g*t);
 		}
 		ao[0] = c[0] + r*cos(theta[0]);
 		ao[1] = c[1] + r*sin(theta[0]);

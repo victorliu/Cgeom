@@ -11,6 +11,23 @@ double frand(){
 	return f1 + f2*nrm;
 }
 
+void draw_arc(const double a[2], const double b[2], double g){
+	unsigned int i;
+	// Draw discretization
+	const unsigned int k = 100;
+	for(i = 0; i <= k; ++i){
+		double s = (double)i/(double)k;
+		double p[2];
+		geom_arc_param(a, b, g, s, p, NULL);
+		if(0 == i){
+			printf("newpath %g %g moveto ", p[0], p[1]);
+		}else{
+			printf("%g %g lineto ", p[0], p[1]);
+		}
+	}
+	printf("stroke\n");
+}
+
 int main(int argc, char *argv[]){
 	unsigned int i, j, k;
 	
@@ -30,7 +47,7 @@ int main(int argc, char *argv[]){
 	
 	for(i = 0; i < 1; ++i){
 		double a[2], b[2], c[2], g;
-		for(j = 0; j <= 1435; ++j){
+		for(j = 0; j <= 0; ++j){
 			a[0] = frand();
 			a[1] = frand();
 			b[0] = frand();
@@ -61,11 +78,13 @@ int main(int argc, char *argv[]){
 		printf("0 0.03 moveto (c = %g, %g) show\n", c[0], c[1]);
 		printf("0 0 moveto (g = %g) show grestore\n", g);
 		
-		printf("%g %g moveto %g %g lineto stroke\n",
-			a[0], a[1], b[0], b[1]
-		);
+		if(0){
+			printf("%g %g moveto %g %g lineto stroke\n",
+				a[0], a[1], b[0], b[1]
+			);
+		}
 		
-		{
+		if(0){
 			double xb[2], yb[2];
 			geom_arc_bound_rect(a, b, g, xb, yb);
 			printf("%g %g moveto %g %g lineto %g %g lineto %g %g lineto closepath stroke\n",
@@ -76,7 +95,7 @@ int main(int argc, char *argv[]){
 			);
 		}
 		
-		{
+		if(0){
 			double c[2], r;
 			geom_arc_bound_circle(a, b, g, c, &r);
 			printf("gsave 1 0 0 setrgbcolor\n");
@@ -84,26 +103,24 @@ int main(int argc, char *argv[]){
 			printf("grestore\n");
 		}
 		
-		k = 100;
-		for(i = 0; i <= k; ++i){
-			double s = (double)i/(double)k;
-			double p[2];
-			geom_arc_param(a, b, g, s, p, NULL);
-			if(0 == i){
-				printf("%g %g moveto ", p[0], p[1]);
-			}else{
-				printf("%g %g lineto ", p[0], p[1]);
+		// Draw discretization
+		printf("0.01 setlinewidth\n");
+		printf("1 0 0 setrgbcolor\n");
+		draw_arc(a, b, g);
+		printf("0.001 setlinewidth\n");
+		printf("0 setgray\n");
+		
+		if(0){
+			// Draw tangents
+			for(i = 0; i <= k; ++i){
+				double s = (double)i/(double)k;
+				double p[2], t[2];
+				geom_arc_param(a, b, g, s, p, t);
+				printf("newpath %g %g 0.002 0 360 arc fill\n", p[0], p[1]);
+				printf("newpath %g %g moveto %g %g rlineto stroke\n", p[0], p[1], t[0], t[1]);
 			}
 		}
-		printf("stroke\n");
 		
-		for(i = 0; i <= k; ++i){
-			double s = (double)i/(double)k;
-			double p[2], t[2];
-			geom_arc_param(a, b, g, s, p, t);
-			printf("newpath %g %g 0.002 0 360 arc fill\n", p[0], p[1]);
-			printf("newpath %g %g moveto %g %g rlineto stroke\n", p[0], p[1], t[0], t[1]);
-		}
 		
 		if(0){
 			double c[2], theta[2];
@@ -116,7 +133,8 @@ int main(int argc, char *argv[]){
 		}
 		
 		
-		{
+		if(0){
+			// Draw the monotone splitting
 			double pg[17];
 			int n = geom_arc_split_monotone(a, b, g, pg);
 			for(i = 0; i < n; ++i){
@@ -133,6 +151,21 @@ int main(int argc, char *argv[]){
 			for(i = 0; i <= n; ++i){
 				printf("newpath %g %g 0.005 0 360 arc fill\n", pg[3*i+0], pg[3*i+1]);
 			}
+		}
+		
+		if(1){
+			double ao[2], bo[2], go = g;
+			geom_arc_offset(a, b, g, 0.1, ao, bo);
+			draw_arc(ao, bo, go);
+			geom_arc_offset(a, b, g, -0.1, ao, bo);
+			draw_arc(ao, bo, go);
+		}
+		
+		if(1){
+			double ao[2], bo[2], go = g;
+			double d[2] = { 0.1, 0.2 };
+			geom_arc_extend(a, b, g, d, ao, bo, &go);
+			draw_arc(ao, bo, go);
 		}
 	}
 	
